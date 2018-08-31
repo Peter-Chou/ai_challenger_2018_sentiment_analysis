@@ -170,3 +170,4 @@ ai_challenger*
 ai_challenger*/*
 TODO
 data/*
+*.ipynb
