@@ -1,0 +1,20 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+tensorflow = "==1.10.0"
+pandas = "*"
+tqdm = "*"
+
+[dev-packages]
+pylint = "*"
+"autopep8" = "*"
+"flake8" = "*"
+rope = "*"
+isort = "*"
+pytest = "*"
+
+[requires]
+python_version = "3.6"
