@@ -15,6 +15,7 @@ pylint = "*"
 rope = "*"
 isort = "*"
 pytest = "*"
+ipykernel = "*"
 
 [requires]
 python_version = "3.6"
