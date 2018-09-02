@@ -7,6 +7,16 @@ from collections import Iterable
 
 
 def flatten(items, ignore_types=(str, bytes)):
+    """
+
+    Args:
+        items (iterable): 可以迭代展开的对象
+        ignore_types (class): Defaults to (str, bytes). 想要忽略的可迭代类
+
+    Yield:
+        不可迭代或忽略列表中的元素
+    """
+
     for x in items:
         if isinstance(x, Iterable) and not isinstance(x, ignore_types):
             yield from flatten(x)
@@ -17,12 +27,12 @@ def flatten(items, ignore_types=(str, bytes)):
 def set_logger(name, log_path):
     """logging 设置使得同时输出到文件和console
 
-    Arguments:
-        name {str} -- logger的名字 建议使用__name__
-        log_path {str} -- log 文件的地址
+    Args:
+        name (str): logger的名字 建议使用__name__
+        log_path (str): log 文件的地址
 
-    Returns:
-        {logging object} -- 设置好的logger
+    Return:
+        (logging object): 设置好的logger
     """
 
     logger = logging.getLogger(name)
