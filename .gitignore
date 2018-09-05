@@ -166,12 +166,17 @@ $RECYCLE.BIN/
 # End of https://www.gitignore.io/api/visualstudiocode,windows,jupyternotebook,python
 
 # Custom rules (everything added below won't be overriden by 'Generate .gitignore File' if you use 'Update' option)
+data/ai_*
+data/test/a/*
+data/train/*
+data/val/*
+!data/train/.gitkeep
+!data/test/a/.gitkeep
+!data/val/.gitkeep
 .vscode/*
 chinese_vectors/*
 !chinese_vectors/readme.md
-ai_challenger*
-ai_challenger*/*
+!chinese_vectors/build_word_vectors.py
 TODO
-data/*
 *.ipynb
 test*
