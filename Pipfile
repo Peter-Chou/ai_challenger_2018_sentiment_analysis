@@ -8,6 +8,7 @@ tensorflow = "==1.10.0"
 pandas = "*"
 tqdm = "*"
 jieba = "*"
+matplotlib = "*"
 
 [dev-packages]
 pylint = "*"
