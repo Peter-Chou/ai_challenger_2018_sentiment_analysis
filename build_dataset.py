@@ -15,8 +15,8 @@ import numpy as np
 
 from model.helper import flatten
 
-CHINESE_WORD_INT_SWITCH = "./chinese_vectors/word_idx_table.json"
-# STOPWORDS_PATH = './chinese_vectors/chinese_stopwords.txt'
+CHINESE_WORD_INT_PATH = "./chinese_vectors/word_idx_table.json"
+STOPWORDS_PATH = './chinese_vectors/chinese_stopwords.txt'
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -68,8 +68,8 @@ def _write_rows_to_csv(lists, saved_csv_name):
 
 def sentence_label_save(file_path, w2i_dict, test=False):
     lengths = []
-    sentences_path = os.path.join(os.path.dirname(file_path), "sentences.csv")
     labels = []
+    sentences_path = os.path.join(os.path.dirname(file_path), "sentences.csv")
     with open(sentences_path, 'w', newline='', encoding='utf-8', errors='ignore') as save_f:
         writer = csv.writer(save_f, delimiter=',')
         with open(file_path, newline='', encoding='utf-8', errors='ignore') as f:
@@ -110,20 +110,37 @@ def sentence_label_save(file_path, w2i_dict, test=False):
     # load_dataset("./data/train/sentiment_analysis_trainingset.csv")
 
 
-def load_word_int_table(file_path):
-    with open(file_path, encoding='utf-8') as f:
-        return json.load(f)
+def load_chinese_table(chinese_path, stopwords_path):
+    """返回去除停止词的word转int的词典
+
+    Args:
+        chinese_path (str): [description]
+        stopwords_path (str): [description]
+
+    Returns:
+        (dict):
+    """
+
+    with open(chinese_path, encoding='utf-8') as f:
+        word_int_table = json.load(f)
+
+    stopwords = set()
+    with open(stopwords_path, 'r', encoding='gb2312', errors='ignore') as f:
+        for stopword in f:
+            stopwords.add(stopword.strip())
+
+    return {k: v for k, v in word_int_table.items() if k not in stopwords}
 
 
 def main():
     args = parser.parse_args()
     if args.data_dir is None:
         raise Exception("must give a dataset folder")
-    word_int_dict = load_word_int_table(CHINESE_WORD_INT_SWITCH)
+    word_int_table = load_chinese_table(CHINESE_WORD_INT_PATH, STOPWORDS_PATH)
     dataset_path = os.path.join(
         args.data_dir, os.path.basename(args.data_dir) + "_sc.csv")
-    max_Length = sentence_label_save(
-        dataset_path, word_int_dict, test=args.test)
+    sentence_label_save(
+        dataset_path, word_int_table, test=args.test)
 
 
 if __name__ == "__main__":
