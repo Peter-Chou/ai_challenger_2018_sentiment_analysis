@@ -33,7 +33,8 @@ def _add_sub_or_unk_word(word, vocab):
     for i in (0, -1):
         if tmp[i] in vocab:
             res.append(tmp[i])
-    return res if len(res) > 0 else "<UNK>"  # 将vocab里未出现的word替换为<UNK>
+    return res if len(res) > 0 else None
+    # return res if len(res) > 0 else "<UNK>"  # 将vocab里未出现的word替换为<UNK>
 
 
 def _add_num_token(word):
@@ -56,8 +57,12 @@ def tokenize_sentence(line, vocab):
             except ValueError:
                 sentence.append(word)
         else:
-            sentence.append(_add_sub_or_unk_word(word, vocab))
-    return list(flatten(sentence))
+            sub_words = _add_sub_or_unk_word(word, vocab)
+            if sub_words is not None:
+                sentence += sub_words
+                # sentence.append(sub_words)
+    return sentence
+    # return list(flatten(sentence))
 
 
 def _write_rows_to_csv(lists, saved_csv_name):
