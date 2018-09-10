@@ -13,10 +13,8 @@ import re
 import jieba
 import numpy as np
 
-from model.helper import flatten
-
 CHINESE_WORD_INT_PATH = "./chinese_vectors/word_idx_table.json"
-STOPWORDS_PATH = './chinese_vectors/chinese_stopwords.txt'
+STOPWORDS_PATH = "./chinese_vectors/chinese_stopwords.txt"
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -34,7 +32,7 @@ def _add_sub_or_unk_word(word, vocab):
         if tmp[i] in vocab:
             res.append(tmp[i])
     return res if len(res) > 0 else None
-    # return res if len(res) > 0 else "<UNK>"  # 将vocab里未出现的word替换为<UNK>
+    # // return res if len(res) > 0 else "<UNK>"  # 将vocab里未出现的word替换为<UNK>
 
 
 def _add_num_token(word):
@@ -60,9 +58,7 @@ def tokenize_sentence(line, vocab):
             sub_words = _add_sub_or_unk_word(word, vocab)
             if sub_words is not None:
                 sentence += sub_words
-                # sentence.append(sub_words)
     return sentence
-    # return list(flatten(sentence))
 
 
 def _write_rows_to_csv(lists, saved_csv_name):
@@ -72,7 +68,6 @@ def _write_rows_to_csv(lists, saved_csv_name):
 
 
 def sentence_label_save(file_path, w2i_dict, test=False):
-    lengths = []
     labels = []
     sentences_path = os.path.join(os.path.dirname(file_path), "sentences.csv")
     with open(sentences_path, 'w', newline='', encoding='utf-8', errors='ignore') as save_f:
@@ -82,7 +77,6 @@ def sentence_label_save(file_path, w2i_dict, test=False):
             next(reader)
             for idx, sentence, *label in reader:
                 sentence = tokenize_sentence(sentence, w2i_dict)
-                lengths.append([int(len(sentence))])  # for test
                 if not test:
                     label = [int(x) for x in label]
                     labels.append(label)
@@ -91,28 +85,6 @@ def sentence_label_save(file_path, w2i_dict, test=False):
     labels_path = os.path.join(os.path.dirname(file_path), "labels.csv")
     if not test:
         _write_rows_to_csv(labels, labels_path)
-    # collect data
-    lengths_path = os.path.join(os.path.dirname(
-        file_path), "lengths_stopwords.csv")
-    _write_rows_to_csv(lengths, lengths_path)
-
-    # with open(path_csv) as in_file:
-    #     next(in_file)
-    #     for idx, line in enumerate(in_file):
-    #         if idx < 3:--
-    #             print(line)
-    #         else:
-    # break
-    # with open(path_csv, newline='', encoding='utf-8', errors='ignore') as in_file:
-    #     reader = csv.reader(in_file, delimiter=',')
-    #     _, _, *label_headers = next(reader)
-    #     for idx, sentence, *labels in reader:
-    # if int(idx) < 20:
-    #     print(_remove_punctuation(sentence))
-    # else:
-    #     break
-
-    # load_dataset("./data/train/sentiment_analysis_trainingset.csv")
 
 
 def load_chinese_table(chinese_path, stopwords_path):
