@@ -13,6 +13,8 @@ import re
 import jieba
 import numpy as np
 
+from model.helper import Params
+
 CHINESE_WORD_INT_PATH = "./chinese_vectors/word_idx_table.json"
 STOPWORDS_PATH = "./chinese_vectors/chinese_stopwords.txt"
 
@@ -20,8 +22,6 @@ parser = argparse.ArgumentParser()
 parser.add_argument(
     "-t", "--test", help="clean test format data", action="store_true")
 parser.add_argument('--data_dir', default=None,
-                    help="Directory containing the raw data to split into sentence & label txt")
-parser.add_argument('--max_len', default=None,
                     help="Directory containing the raw data to split into sentence & label txt")
 
 
@@ -67,20 +67,41 @@ def _write_rows_to_csv(lists, saved_csv_name):
         writer.writerows(lists)
 
 
-def sentence_label_save(file_path, w2i_dict, test=False):
+def sentence_label_save(file_path, w2i_dict, test=False, max_len=500):
+
+    def _string_to_int_sentence(line, lookup_table, max_len):
+        int_sentence = []
+        num_idx = len(lookup_table)
+        if len(line) > max_len:
+            line = line[:max_len]
+        for word in line:
+            if word == "<num>":
+                int_sentence.append(num_idx)
+            else:
+                int_sentence.append(lookup_table[word])
+        return int_sentence
+
     labels = []
     sentences_path = os.path.join(os.path.dirname(file_path), "sentences.csv")
+    sentences_idx_path = os.path.join(
+        os.path.dirname(file_path), "sentences_idx.csv")
+
     with open(sentences_path, 'w', newline='', encoding='utf-8', errors='ignore') as save_f:
-        writer = csv.writer(save_f, delimiter=',')
-        with open(file_path, newline='', encoding='utf-8', errors='ignore') as f:
-            reader = csv.reader(f, delimiter=',')
-            next(reader)
-            for idx, sentence, *label in reader:
-                sentence = tokenize_sentence(sentence, w2i_dict)
-                if not test:
-                    label = [int(x) for x in label]
-                    labels.append(label)
-                writer.writerow(sentence)
+        with open(sentences_idx_path, 'w', newline='') as save_idx_f:
+            writer = csv.writer(save_f, delimiter=',')
+            writer_idx = csv.writer(save_idx_f, delimiter=',')
+            with open(file_path, newline='', encoding='utf-8', errors='ignore') as f:
+                reader = csv.reader(f, delimiter=',')
+                next(reader)
+                for idx, sentence, *label in reader:
+                    sentence = tokenize_sentence(sentence, w2i_dict)
+                    sentence_idx = _string_to_int_sentence(
+                        sentence, w2i_dict, max_len)
+                    if not test:
+                        label = [int(x) for x in label]
+                        labels.append(label)
+                    writer.writerow(sentence)
+                    writer_idx.writerow(sentence_idx)
 
     labels_path = os.path.join(os.path.dirname(file_path), "labels.csv")
     if not test:
@@ -113,6 +134,7 @@ def main():
     args = parser.parse_args()
     if args.data_dir is None:
         raise Exception("must give a dataset folder")
+    params = Params("./preprocess_params.json")
     word_int_table = load_chinese_table(CHINESE_WORD_INT_PATH, STOPWORDS_PATH)
     dataset_path = os.path.join(
         args.data_dir, os.path.basename(args.data_dir) + "_sc.csv")
