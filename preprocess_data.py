@@ -67,13 +67,13 @@ def _write_rows_to_csv(lists, saved_csv_name):
         writer.writerows(lists)
 
 
-def sentence_label_save(file_path, w2i_dict, test=False, max_len=500):
+def sentence_label_save(file_path, w2i_dict, params, test=False):
 
-    def _string_to_int_sentence(line, lookup_table, max_len):
+    def _string_to_int_sentence(line, lookup_table, params):
         int_sentence = []
-        num_idx = len(lookup_table)
-        if len(line) > max_len:
-            line = line[:max_len]
+        num_idx = params.chinese_word_size
+        if len(line) > params.max_len:
+            line = line[:params.max_len]
         for word in line:
             if word == "<num>":
                 int_sentence.append(num_idx)
@@ -96,7 +96,7 @@ def sentence_label_save(file_path, w2i_dict, test=False, max_len=500):
                 for idx, sentence, *label in reader:
                     sentence = tokenize_sentence(sentence, w2i_dict)
                     sentence_idx = _string_to_int_sentence(
-                        sentence, w2i_dict, max_len)
+                        sentence, w2i_dict, params)
                     if not test:
                         label = [int(x) for x in label]
                         labels.append(label)
@@ -139,7 +139,7 @@ def main():
     dataset_path = os.path.join(
         args.data_dir, os.path.basename(args.data_dir) + "_sc.csv")
     sentence_label_save(
-        dataset_path, word_int_table, test=args.test)
+        dataset_path, word_int_table, params, test=args.test)
 
 
 if __name__ == "__main__":
