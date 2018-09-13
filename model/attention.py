@@ -138,7 +138,7 @@ def positional_encoding(inputs,
         position_enc[:, 0::2] = np.sin(position_enc[:, 0::2])  # dim 2i
         position_enc[:, 1::2] = np.cos(position_enc[:, 1::2])  # dim 2i+1
 
-        # Convert to a tensor (maybe tf.float64)
+        # Convert to a tensor
         lookup_table = tf.convert_to_tensor(position_enc, dtype=tf.float32)
 
         if zero_pad:

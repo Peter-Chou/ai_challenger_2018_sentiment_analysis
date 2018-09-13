@@ -20,7 +20,7 @@ def build_model(mode, vector_path, inputs, params, reuse=False):
                                   zero_pad=False,
                                   scale=False)
 
-    # * add dropout mask vector may be not a good idea
+    # # * add dropout mask vector may be not a good idea
     vector = tf.layers.dropout(vector, rate=params.dropout_rate,
                                training=tf.convert_to_tensor(is_training))
 
