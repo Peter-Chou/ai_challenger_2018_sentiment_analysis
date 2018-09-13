@@ -9,6 +9,47 @@ import numpy as np
 import tensorflow as tf
 
 
+def normalize(inputs,
+              epsilon=1e-8,
+              scope="ln",
+              reuse=None):
+    '''Applies layer normalization.
+
+    Args:
+      inputs: A tensor with 2 or more dimensions, where the first dimension has
+        `batch_size`.
+      epsilon: A floating number. A very small number for preventing ZeroDivision Error.
+      scope: Optional scope for `variable_scope`.
+      reuse: Boolean, whether to reuse the weights of a previous layer
+        by the same name.
+
+    Returns:
+      A tensor with the same shape and data dtype as `inputs`.
+    '''
+    # TODO : change tf.Variable to tf.get_variable
+    with tf.variable_scope(scope, reuse=reuse):
+        inputs_shape = inputs.get_shape()
+        params_shape = inputs_shape[-1:]
+
+        mean, variance = tf.nn.moments(inputs, [-1], keep_dims=True)
+        # beta = tf.get_variable("beta",
+        #                        shape=params_shape,
+        #                        dtype=tf.float64,
+        #                        initializer=tf.zeros_initializer())
+        # gamma = tf.get_variable("gamma",
+        #                         shape=params_shape,
+        #                         dtype=tf.float64,
+        #                         initializer=tf.ones_initializer())
+        beta = tf.cast(tf.Variable(tf.zeros(params_shape)), tf.float64)
+        gamma = tf.cast(tf.Variable(tf.ones(params_shape)), tf.float64)
+        # beta = tf.Variable(tf.zeros(params_shape))
+        # gamma = tf.Variable(tf.ones(params_shape))
+        normalized = (inputs - mean) / ((variance + epsilon) ** (.5))
+        outputs = gamma * normalized + beta
+
+    return outputs
+
+
 def embed_lookup(inputs, vector_path, scale=False, scope="embedding"):
 
     pretrained_embs = np.load(vector_path)
@@ -18,7 +59,7 @@ def embed_lookup(inputs, vector_path, scale=False, scope="embedding"):
         pretrained_embs = tf.get_variable(
             name="embs_pretrained",
             initializer=tf.constant_initializer(
-                np.asarray(pretrained_embs), dtype=tf.float32),
+                np.asarray(pretrained_embs), dtype=tf.float64),
             dtype=tf.float64,
             shape=pretrained_embs.shape, trainable=False)
 
