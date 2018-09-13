@@ -7,9 +7,11 @@ import json
 import logging
 from collections import Iterable
 
+import yaml
+
 
 def flatten(items, ignore_types=(str, bytes)):
-    """
+    """展开成一维可迭代的生成器
 
     Args:
         items (iterable): 可以迭代展开的对象
@@ -27,33 +29,47 @@ def flatten(items, ignore_types=(str, bytes)):
 
 
 class Params():
-    """Class that loads hyperparameters from a json file.
+    """Class that loads hyperparameters from a yaml file.
     Example:
     ```
-    params = Params(json_path)
+    params = Params(yaml_path)
     print(params.learning_rate)
     params.learning_rate = 0.5  # change the value of learning_rate in params
     ```
     """
 
-    def __init__(self, json_path):
-        self.update(json_path)
+    def __init__(self, yaml_path):
+        self.update(yaml_path)
 
-    def save(self, json_path):
-        """Saves parameters to json file"""
-        with open(json_path, 'w') as f:
-            json.dump(self.__dict__, f, indent=4)
+    def save(self, yaml_path):
+        """Saves parameters to yaml file"""
+        with open(yaml_path, 'w') as f:
+            yaml.dump(self.__dict__, f)
 
-    def update(self, json_path):
-        """Loads parameters from json file"""
-        with open(json_path) as f:
-            params = json.load(f)
+    def update(self, yaml_path):
+        """Loads parameters from yaml file"""
+        with open(yaml_path) as f:
+            params = yaml.load(f)
             self.__dict__.update(params)
 
     @property
     def dict(self):
         """Gives dict-like access to Params instance by `params.dict['learning_rate']`"""
         return self.__dict__
+
+
+def save_dict_to_yaml(d, yaml_path):
+    """Saves dict of floats in yaml file
+    Args:
+        d: (dict) of float-castable values (np.float, int, float, etc.)
+        yaml_path: (string) path to yaml file
+    """
+    with open(yaml_path, 'w', encoding='utf-8') as f:
+        # We need to convert the values to float for yaml (it doesn't accept np.array, np.float, )
+        d = {k: float(v) for k, v in d.items()}
+
+        yaml.dump(d, f, encoding='utf-8', indent=4,
+                  default_flow_style=False, allow_unicode=True)
 
 
 def set_logger(log_path, file_logging_level="INFO", console_logging_level="INFO",
@@ -96,15 +112,3 @@ def set_logger(log_path, file_logging_level="INFO", console_logging_level="INFO"
             getattr(logging, console_logging_level.upper()))
         logger.addHandler(stream_handler)
         return logger
-
-
-def save_dict_to_json(d, json_path):
-    """Saves dict of floats in json file
-    Args:
-        d: (dict) of float-castable values (np.float, int, float, etc.)
-        json_path: (string) path to json file
-    """
-    with open(json_path, 'w', encoding='utf-8') as f:
-        # We need to convert the values to float for json (it doesn't accept np.array, np.float, )
-        d = {k: float(v) for k, v in d.items()}
-        json.dump(d, f, indent=4, ensure_ascii=False)
