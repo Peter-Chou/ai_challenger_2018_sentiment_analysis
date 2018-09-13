@@ -40,10 +40,11 @@ def normalize(inputs,
         #                         shape=params_shape,
         #                         dtype=tf.float64,
         #                         initializer=tf.ones_initializer())
-        beta = tf.cast(tf.Variable(tf.zeros(params_shape)), tf.float64)
-        gamma = tf.cast(tf.Variable(tf.ones(params_shape)), tf.float64)
-        # beta = tf.Variable(tf.zeros(params_shape))
-        # gamma = tf.Variable(tf.ones(params_shape))
+
+        # beta = tf.cast(tf.Variable(tf.zeros(params_shape)), tf.float64)
+        # gamma = tf.cast(tf.Variable(tf.ones(params_shape)), tf.float64)
+        beta = tf.Variable(tf.zeros(params_shape))
+        gamma = tf.Variable(tf.ones(params_shape))
         normalized = (inputs - mean) / ((variance + epsilon) ** (.5))
         outputs = gamma * normalized + beta
 
@@ -59,16 +60,31 @@ def embed_lookup(inputs, vector_path, scale=False, scope="embedding"):
         pretrained_embs = tf.get_variable(
             name="embs_pretrained",
             initializer=tf.constant_initializer(
-                np.asarray(pretrained_embs), dtype=tf.float64),
-            dtype=tf.float64,
+                np.asarray(pretrained_embs), dtype=tf.float32),
+            # dtype=tf.float64,
             shape=pretrained_embs.shape, trainable=False)
 
         num_vector = tf.get_variable(
             name="NUM",
             shape=[1, embed_size],
             initializer=tf.random_uniform_initializer(-0.04, 0.04),
-            dtype=tf.float64,
+            # dtype=tf.float64,
             trainable=True)
+
+        # pretrained_embs = tf.get_variable(
+        #     name="embs_pretrained",
+        #     initializer=tf.constant_initializer(
+        #         np.asarray(pretrained_embs), dtype=tf.float64),
+        #     dtype=tf.float64,
+        #     shape=pretrained_embs.shape, trainable=False)
+
+        # num_vector = tf.get_variable(
+        #     name="NUM",
+        #     shape=[1, embed_size],
+        #     initializer=tf.random_uniform_initializer(-0.04, 0.04),
+        #     dtype=tf.float64,
+        #     trainable=True)
+
         # pad_embedding = tf.get_variable(
         #     name="PAD",
         #     shape=[1, pretrained_embs.shape[1]],
@@ -122,8 +138,8 @@ def positional_encoding(inputs,
         position_enc[:, 0::2] = np.sin(position_enc[:, 0::2])  # dim 2i
         position_enc[:, 1::2] = np.cos(position_enc[:, 1::2])  # dim 2i+1
 
-        # Convert to a tensor
-        lookup_table = tf.convert_to_tensor(position_enc)
+        # Convert to a tensor (maybe tf.float64)
+        lookup_table = tf.convert_to_tensor(position_enc, dtype=tf.float32)
 
         if zero_pad:
             lookup_table = tf.concat((tf.zeros(shape=[1, num_units]),
