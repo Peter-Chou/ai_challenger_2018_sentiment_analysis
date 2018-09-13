@@ -68,10 +68,20 @@ def _write_rows_to_csv(lists, saved_csv_name):
 
 
 def sentence_label_save(file_path, w2i_dict, params, test=False):
+    """保存预处理完成的转型为int的sentence(sentence有长度截断)和one-hot后的labels (如果test=False)
+
+    Args:
+        file_path (str): 原始数据文件
+        w2i_dict (dict): 语料库与int对应的字典
+        params (Params object): 含有预处理所需参数的Params对象
+        test (bool, optional): Defaults to False. 该文件是否为test, 若True则不输出labels
+
+    """
 
     def _string_to_int_sentence(line, lookup_table, params):
         int_sentence = []
         num_idx = params.chinese_word_size
+        # 经初步处理后sentence 超过的max_len的部分去除
         if len(line) > params.max_len:
             line = line[:params.max_len]
         for word in line:
@@ -81,27 +91,49 @@ def sentence_label_save(file_path, w2i_dict, params, test=False):
                 int_sentence.append(lookup_table[word])
         return int_sentence
 
+    def _one_hot_label(label, one_hot_len):
+        label_one_hot = np.array([0] * 80)
+        idx = [x + 2 + 4 * i for i, x in enumerate(label)]
+        label_one_hot[idx] = 1
+        return list(label_one_hot)
+
     labels = []
-    sentences_path = os.path.join(os.path.dirname(file_path), "sentences.csv")
     sentences_idx_path = os.path.join(
         os.path.dirname(file_path), "sentences_idx.csv")
 
-    with open(sentences_path, 'w', newline='', encoding='utf-8', errors='ignore') as save_f:
-        with open(sentences_idx_path, 'w', newline='') as save_idx_f:
-            writer = csv.writer(save_f, delimiter=',')
-            writer_idx = csv.writer(save_idx_f, delimiter=',')
-            with open(file_path, newline='', encoding='utf-8', errors='ignore') as f:
-                reader = csv.reader(f, delimiter=',')
-                next(reader)
-                for idx, sentence, *label in reader:
-                    sentence = tokenize_sentence(sentence, w2i_dict)
-                    sentence_idx = _string_to_int_sentence(
-                        sentence, w2i_dict, params)
-                    if not test:
-                        label = [int(x) for x in label]
-                        labels.append(label)
-                    writer.writerow(sentence)
-                    writer_idx.writerow(sentence_idx)
+    with open(sentences_idx_path, 'w', newline='') as save_idx_f:
+        writer_idx = csv.writer(save_idx_f, delimiter=',')
+        with open(file_path, newline='', encoding='utf-8', errors='ignore') as f:
+            reader = csv.reader(f, delimiter=',')
+            next(reader)
+            for idx, sentence, *label in reader:
+                sentence = tokenize_sentence(sentence, w2i_dict)
+                sentence_idx = _string_to_int_sentence(
+                    sentence, w2i_dict, params)
+                if not test:
+                    label = [int(x) for x in label]
+                    # one-hot for each label category
+                    label = _one_hot_label(label, one_hot_len=80)
+                    labels.append(label)
+                writer_idx.writerow(sentence_idx)
+
+    # sentences_path = os.path.join(os.path.dirname(file_path), "sentences.csv")
+    # with open(sentences_path, 'w', newline='', encoding='utf-8', errors='ignore') as save_f:
+    #     with open(sentences_idx_path, 'w', newline='') as save_idx_f:
+    #         writer = csv.writer(save_f, delimiter=',')
+    #         writer_idx = csv.writer(save_idx_f, delimiter=',')
+    #         with open(file_path, newline='', encoding='utf-8', errors='ignore') as f:
+    #             reader = csv.reader(f, delimiter=',')
+    #             next(reader)
+    #             for idx, sentence, *label in reader:
+    #                 sentence = tokenize_sentence(sentence, w2i_dict)
+    #                 sentence_idx = _string_to_int_sentence(
+    #                     sentence, w2i_dict, params)
+    #                 if not test:
+    #                     label = [int(x) for x in label]
+    #                     labels.append(label)
+    #                 writer.writerow(sentence)
+    #                 writer_idx.writerow(sentence_idx)
 
     labels_path = os.path.join(os.path.dirname(file_path), "labels.csv")
     if not test:
@@ -116,7 +148,7 @@ def load_chinese_table(chinese_path, stopwords_path):
         stopwords_path (str): [description]
 
     Returns:
-        (dict):
+        dict: 返回 word->int 对应的字典
     """
 
     with open(chinese_path, encoding='utf-8') as f:
@@ -134,7 +166,7 @@ def main():
     args = parser.parse_args()
     if args.data_dir is None:
         raise Exception("must give a dataset folder")
-    params = Params("./preprocess_params.json")
+    params = Params("./params.yml")
     word_int_table = load_chinese_table(CHINESE_WORD_INT_PATH, STOPWORDS_PATH)
     dataset_path = os.path.join(
         args.data_dir, os.path.basename(args.data_dir) + "_sc.csv")
