@@ -9,6 +9,8 @@ import numpy as np
 import tensorflow as tf
 
 
+# ###################################################
+# Attention Part
 def normalize(inputs,
               epsilon=1e-8,
               scope="ln",
@@ -228,42 +230,8 @@ def feedforward(inputs,
     return outputs
 
 
-def label_smoothing(inputs, epsilon=0.1):
-    '''Applies label smoothing. See https://arxiv.org/abs/1512.00567.
-
-    Args:
-      inputs: A 3d tensor with shape of [N, T, V], where V is the number of vocabulary.
-      epsilon: Smoothing rate.
-
-    For example,
-
-    ```
-    import tensorflow as tf
-    inputs = tf.convert_to_tensor([[[0, 0, 1],
-       [0, 1, 0],
-       [1, 0, 0]],
-      [[1, 0, 0],
-       [1, 0, 0],
-       [0, 1, 0]]], tf.float32)
-
-    outputs = label_smoothing(inputs)
-
-    with tf.Session() as sess:
-        print(sess.run([outputs]))
-
-    >>
-    [array([[[ 0.03333334,  0.03333334,  0.93333334],
-        [ 0.03333334,  0.93333334,  0.03333334],
-        [ 0.93333334,  0.03333334,  0.03333334]],
-       [[ 0.93333334,  0.03333334,  0.03333334],
-        [ 0.93333334,  0.03333334,  0.03333334],
-        [ 0.03333334,  0.93333334,  0.03333334]]], dtype=float32)]
-    ```
-    '''
-    K = inputs.get_shape().as_list()[-1]  # number of channels
-    return ((1-epsilon) * inputs) + (epsilon / K)
-
-
+# ###################################################
+# CNN Part
 def conv_maxpool(inputs,
                  filter_size,
                  num_filters,
@@ -329,7 +297,7 @@ def inception(inputs,
             of a previous layer by the same name
 
     Returns:
-        4d tensor: (N, 1, 1, len(params.filter_sizes) * params.num_filters)
+        4d tensor: (N, 1, 1, len(params.filter_size_list) * params.num_filters)
     """
 
     # filter_sizes = params.filter_sizes
@@ -344,4 +312,42 @@ def inception(inputs,
                                    scope=f"conv_maxpool_{filter_size}_filter",
                                    reuse=reuse)
             pooled_outputs.append(feature)
+
+    # (N, 1, 1, len(params.filter_sizes) * params.num_filters)
     return tf.concat(pooled_outputs, -1)
+
+
+def label_smoothing(inputs, epsilon=0.1):
+    '''Applies label smoothing. See https://arxiv.org/abs/1512.00567.
+
+    Args:
+      inputs: A 3d tensor with shape of [N, T, V], where V is the number of vocabulary.
+      epsilon: Smoothing rate.
+
+    For example,
+
+    ```
+    import tensorflow as tf
+    inputs = tf.convert_to_tensor([[[0, 0, 1],
+       [0, 1, 0],
+       [1, 0, 0]],
+      [[1, 0, 0],
+       [1, 0, 0],
+       [0, 1, 0]]], tf.float32)
+
+    outputs = label_smoothing(inputs)
+
+    with tf.Session() as sess:
+        print(sess.run([outputs]))
+
+    >>
+    [array([[[ 0.03333334,  0.03333334,  0.93333334],
+        [ 0.03333334,  0.93333334,  0.03333334],
+        [ 0.93333334,  0.03333334,  0.03333334]],
+       [[ 0.93333334,  0.03333334,  0.03333334],
+        [ 0.93333334,  0.03333334,  0.03333334],
+        [ 0.03333334,  0.93333334,  0.03333334]]], dtype=float32)]
+    ```
+    '''
+    K = inputs.get_shape().as_list()[-1]  # number of channels
+    return ((1-epsilon) * inputs) + (epsilon / K)
