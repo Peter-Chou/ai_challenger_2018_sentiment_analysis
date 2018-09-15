@@ -4,8 +4,6 @@ where you define the input data pipeline
 
 import tensorflow as tf
 
-from model.attention import embed_lookup
-
 
 def build_dataset(file_path, length, padding=False):
     """创建子dataset
