@@ -48,7 +48,7 @@ def build_model(mode, vector_path, inputs, params, reuse=False):
                                training=tf.convert_to_tensor(is_training))
 
     # # transformer attention stacks
-    # attns = []
+    attns = []
     for i in range(params.num_attention_stacks):
         with tf.variable_scope(f"num_attention_stacks_{i + 1}"):
             # multi-head attention
@@ -63,14 +63,18 @@ def build_model(mode, vector_path, inputs, params, reuse=False):
     #         # feed forward
             vector = feedforward(vector,
                                  num_units=[4*params.hidden_size, params.hidden_size])
-    #         attns.append(vector)
+            attns.append(vector)
+    # concat all attentions (like DenseNet)
+    features = tf.concat(attns, 1)  # (N, attention_stacks*T, C)
 
-    # features = tf.concat(attns, 1)  # concat all attentions (like DenseNet)
+    # 最里增加一维，以模拟一维黑白通道
+    features = tf.expand_dims(features, -1)  # (N, attention_stacks*T, C, 1)
 # ************************************************************
 # complete attention part, now CNN capture part
 # ************************************************************
 
-    return vector
+    # return vector
+    return features
 
 
 if __name__ == "__main__":
