@@ -1,0 +1,17 @@
+# preprocess data parameters
+max_len: 500
+chinese_word_size: 195198 # add <num> to vocab
+multi_categories: 20
+num_sentiment: 4
+
+# dataset parameters
+batch_size: 1
+prefetch: 2
+buffer_size: 20000
+
+# embed / position vectors parameters
+embed_size: 300
+hidden_size: 100 # reduce word dimension to 100
+dropout_rate: 0.1
+num_attention_stacks: 3
+num_heads: 4
