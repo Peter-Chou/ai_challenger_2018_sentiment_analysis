@@ -2,8 +2,8 @@
 
 import tensorflow as tf
 
-from model.attention import (embed_lookup, feedforward, multihead_attention,
-                             positional_encoding)
+from model.attention import feedforward, multihead_attention
+from model.embedding import position_embedding, word_embedding
 
 
 def build_model(mode, vector_path, inputs, params, reuse=False):
@@ -14,7 +14,7 @@ def build_model(mode, vector_path, inputs, params, reuse=False):
     # iterator_init_op = inputs["iterator_init_op"]
 
     # build embedding vectors
-    vector = embed_lookup(x, vector_path, scale=False)
+    vector = word_embedding(x, vector_path, scale=False)
 
     # ! reduce the fiexed word dimensions to appropriate dimension
     if params.hidden_size != vector.get_shape().as_list()[-1]:
@@ -37,11 +37,11 @@ def build_model(mode, vector_path, inputs, params, reuse=False):
     vector = vector * (params.hidden_size ** 0.5)
 
     # 给词向量 增加位置信息
-    vector += positional_encoding(x,
-                                  num_units=params.hidden_size,
-                                  mask_pad=True,
-                                  #   zero_pad=False,
-                                  scale=False)
+    vector += position_embedding(x,
+                                 num_units=params.hidden_size,
+                                 mask_pad=True,
+                                 #   zero_pad=False,
+                                 scale=False)
 
     # # * add dropout mask vector may be not a good idea
     vector = tf.layers.dropout(vector, rate=params.dropout_rate,
