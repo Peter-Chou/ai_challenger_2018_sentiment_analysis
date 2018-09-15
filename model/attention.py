@@ -262,3 +262,86 @@ def label_smoothing(inputs, epsilon=0.1):
     '''
     K = inputs.get_shape().as_list()[-1]  # number of channels
     return ((1-epsilon) * inputs) + (epsilon / K)
+
+
+def conv_maxpool(inputs,
+                 filter_size,
+                 num_filters,
+                 hidden_size,
+                 scope="conv_maxpool",
+                 reuse=None):
+    """conv + maxpool
+
+    以attention为单位，按filter_size单位的attentions为窗口卷积params.num_filters个feature map,
+    对每个feature map求整体最大值，作为这个feature map的特征值
+
+    Args:
+        inputs (4d tensor): (N, T, C, d), d一般是1
+        filter_size (int): filter的高度（宽度默认与attention的维度相同,这里可以理解为
+            选用filter_size个attention作为filter的窗口, 每次按一个attention滑动
+        num_filters (int): 一个filter生成的feature map数量
+        hidden_size (int): attention的维度
+        scope (str, optional):  Defaults to "conv_maxpool". Optional scope
+        reuse (Bool, optional): Defaults to None. whether to reuse the weights
+            of a previous layer by the same name
+
+    Returns:
+        4d tensor: (N, 1, 1, params.num_filters)
+    """
+
+    with tf.variable_scope(scope, reuse=reuse):
+        inputs_height = inputs.get_shape().as_list()[1]
+
+        # conv 为 (n, new_height, 1, params.num_filters)
+        # new_height = (inputs_height - filter_size / stride_height) + 1
+        conv = tf.layers.conv2d(
+            inputs,
+            filters=num_filters,
+            kernel_size=(filter_size, hidden_size),
+            activation=tf.nn.relu)
+
+        # pool 为 (n, 1, 1, params.num_filters)
+        # 将一个feature map 池化为一个特征值
+        pool = tf.layers.max_pooling2d(
+            conv,
+            pool_size=(inputs_height - filter_size + 1, 1),
+            strides=(1, 1))
+
+        # pool = tf.reshape(pool, (-1, params.num_filters))  # (n, params.num_filters)
+        return pool
+
+
+def inception(inputs,
+              filter_size_list,
+              num_filters,
+              hidden_size,
+              scope="inception",
+              reuse=None):
+    """将不同filter_size得到的不同特征组合在一起并返回
+
+    Args:
+        inputs (4d tensor): (N, T, C, d), d一般是1
+        filter_size_list (A list of int): 含有多个filter_size的list
+        num_filters (int): 一个filter生成的feature map数量
+        hidden_size (int): attention的维度
+        scope (str, optional):  Defaults to "conv_maxpool". Optional scope
+        reuse (Bool, optional): Defaults to None. whether to reuse the weights
+            of a previous layer by the same name
+
+    Returns:
+        4d tensor: (N, 1, 1, len(params.filter_sizes) * params.num_filters)
+    """
+
+    # filter_sizes = params.filter_sizes
+    # num_filters = params.hidden_size
+    with tf.variable_scope(scope, reuse=reuse):
+        pooled_outputs = []
+        for filter_size in filter_size_list:
+            feature = conv_maxpool(inputs,
+                                   filter_size=filter_size,
+                                   num_filters=num_filters,
+                                   hidden_size=hidden_size,
+                                   scope=f"conv_maxpool_{filter_size}_filter",
+                                   reuse=reuse)
+            pooled_outputs.append(feature)
+    return tf.concat(pooled_outputs, -1)
