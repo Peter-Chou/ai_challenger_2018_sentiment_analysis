@@ -2,7 +2,8 @@
 
 import tensorflow as tf
 
-from model.attention import feedforward, multihead_attention
+from model.attention import (feedforward, inception, label_smoothing,
+                             multihead_attention)
 from model.embedding import position_embedding, word_embedding
 
 
@@ -10,7 +11,12 @@ def build_model(mode, vector_path, inputs, params, reuse=False):
     is_training = (mode == "train")
 
     x = inputs["sentence"]
-    label = inputs["label"]
+    labels = inputs["label"]
+
+    if params.label_smooth:
+        labels = tf.cast(labels, tf.float32)
+        labels = label_smoothing(labels)
+
     # iterator_init_op = inputs["iterator_init_op"]
 
     # build embedding vectors
@@ -65,16 +71,50 @@ def build_model(mode, vector_path, inputs, params, reuse=False):
                                  num_units=[4*params.hidden_size, params.hidden_size])
             attns.append(vector)
     # concat all attentions (like DenseNet)
-    features = tf.concat(attns, 1)  # (N, attention_stacks*T, C)
+    attentions = tf.concat(attns, 1)  # (N, attention_stacks*T, C)
 
     # 最里增加一维，以模拟一维黑白通道
-    features = tf.expand_dims(features, -1)  # (N, attention_stacks*T, C, 1)
+    # (N, attention_stacks*T, C, 1)
+    attentions = tf.expand_dims(attentions, -1)
+
 # ************************************************************
 # complete attention part, now CNN capture part
 # ************************************************************
+    logits = []
+    # 每个category对应一个inception_maxpool classifier
+    for topic in range(params.multi_categories):
 
-    # return vector
-    return features
+        features = inception(attentions,
+                             filter_size_list=params.filter_size_list,
+                             num_filters=params.num_filters,
+                             hidden_size=params.hidden_size,
+                             scope=f"category_{topic+1}")  # (n, 1, 1, total_filter_num)
+
+        total_feature_num = len(params.filter_size_list) * params.num_filters
+
+        # features: (n, total_filter_num)
+        features = tf.reshape(features, (-1, total_feature_num))
+
+        # logit: (n, num_sentiment)
+        logit = tf.layers.dense(features,
+                                params.num_sentiment,
+                                activation=None,
+                                use_bias=True,
+                                kernel_regularizer=tf.contrib.layers.l2_regularizer(1.0))
+
+        # 将该category的logit加入列表
+        logits.append(logit)
+
+    # logits: (n, multi_categories, num_sentiment)
+    logits = tf.stack(logits, axis=1)
+
+    # loss: (n, multi_categories)
+    loss = tf.nn.softmax_cross_entropy_with_logits_v2(
+        labels=labels, logits=logits)
+    # loss: scala tensor. return total batch loss
+    loss = tf.reduce_sum(loss)
+
+    return loss
 
 
 if __name__ == "__main__":
