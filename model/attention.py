@@ -317,6 +317,56 @@ def inception(inputs,
     return tf.concat(pooled_outputs, -1)
 
 
+def dense_logits(inputs,
+                 label_num,
+                 kernel_regularizer,
+                 scope="dense_logits",
+                 inner_dense_outshape=None,
+                 inner_dense_activation=tf.nn.relu,
+                 use_bias=True,
+                 reuse=None
+                 ):
+    """经过（多层）dense输出category各个label class的logits
+
+    Args:
+        inputs (2d tensor): 特征向量：(n, feature_num)
+        label_num (int): label class的数量
+        kernel_regularizer (regularizer): 矩阵w的约束器
+        scope (str, optional): Defaults to "dense_logits". socpe namespace
+        inner_dense_outshape (list, optional): Defaults to None.
+            若为None / []，则没有中间的dense层
+        inner_dense_activation (operation, optional): Defaults to tf.nn.relu
+        use_bias (bool, optional): Defaults to True. 是否在所有层中使用偏置
+        reuse ([type], optional): Defaults to None.
+
+    Returns:
+        2d tensor: (n, label_num)
+    """
+
+    out = inputs
+    inner_dense_sizes = [] if inner_dense_outshape is None else inner_dense_outshape
+
+    with tf.variable_scope(scope, reuse=reuse):
+        for out_size in inner_dense_sizes:
+            out = tf.layers.dense(
+                out,
+                out_size,
+                activation=inner_dense_activation,
+                use_bias=use_bias,
+                kernel_regularizer=kernel_regularizer
+            )
+
+        out = tf.layers.dense(
+            out,
+            label_num,
+            activation=None,
+            use_bias=use_bias,
+            kernel_regularizer=kernel_regularizer
+        )
+
+    return out
+
+
 def label_smoothing(inputs, epsilon=0.1):
     '''Applies label smoothing. See https://arxiv.org/abs/1512.00567.
 
