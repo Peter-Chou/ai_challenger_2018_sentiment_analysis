@@ -125,6 +125,10 @@ def build_model(mode, vector_path, inputs, params, reuse=False):
     # loss: scala tensor. return total batch loss
     loss = tf.reduce_sum(loss)
 
+    if mode == "infer":
+        prediction = tf.squeeze(logits)
+        prediction = tf.subtract(tf.argmax(prediction, axis=1), 2)
+
     return loss
 
 
