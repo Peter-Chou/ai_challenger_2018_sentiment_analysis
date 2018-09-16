@@ -8,7 +8,7 @@ num_sentiment: 4
 batch_size: 1
 # batch_size: 96
 prefetch: 2
-buffer_size: 20000
+buffer_size: 120000
 
 # embed / position vectors parameters
 embed_size: 300
