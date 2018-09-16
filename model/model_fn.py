@@ -2,8 +2,8 @@
 
 import tensorflow as tf
 
-from model.attention import (feedforward, inception, label_smoothing,
-                             multihead_attention)
+from model.attention import (dense_logits, feedforward, inception,
+                             label_smoothing, multihead_attention)
 from model.embedding import position_embedding, word_embedding
 
 
@@ -88,7 +88,7 @@ def build_model(mode, vector_path, inputs, params, reuse=False):
                              filter_size_list=params.filter_size_list,
                              num_filters=params.num_filters,
                              hidden_size=params.hidden_size,
-                             scope=f"category_{topic+1}")  # (n, 1, 1, total_filter_num)
+                             scope=f"category_{topic+1}_inception")  # (n, 1, 1, total_filter_num)
 
         total_feature_num = len(params.filter_size_list) * params.num_filters
 
@@ -96,14 +96,25 @@ def build_model(mode, vector_path, inputs, params, reuse=False):
         features = tf.reshape(features, (-1, total_feature_num))
 
         # logit: (n, num_sentiment)
-        logit = tf.layers.dense(features,
-                                params.num_sentiment,
-                                activation=None,
-                                use_bias=True,
-                                kernel_regularizer=tf.contrib.layers.l2_regularizer(1.0))
+        # logit = tf.layers.dense(features,
+        #                         params.num_sentiment,
+        #                         activation=None,
+        #                         use_bias=True,
+        #                         kernel_regularizer=tf.contrib.layers.l2_regularizer(1.0))
+
+        # category_logit: (n, num_sentiment)
+        category_logits = dense_logits(
+            features,
+            params.num_sentiment,
+            kernel_regularizer=tf.contrib.layers.l2_regularizer(
+                1.0),
+            scope=f"category_{topic+1}_logits",
+            inner_dense_outshape=params.inner_dense_outshape,
+            inner_dense_activation=tf.tanh,
+            use_bias=True)
 
         # 将该category的logit加入列表
-        logits.append(logit)
+        logits.append(category_logits)
 
     # logits: (n, multi_categories, num_sentiment)
     logits = tf.stack(logits, axis=1)
