@@ -2,6 +2,8 @@
 where you define the input data pipeline
 """
 
+import os
+
 import tensorflow as tf
 
 
@@ -9,8 +11,7 @@ def build_dataset(file_path,
                   length,
                   padding=False,
                   cascading_label=False,
-                  label_num=None,
-                  num_parallel_calls=8):
+                  label_num=None):
     """创建子dataset
 
     Args:
@@ -22,7 +23,6 @@ def build_dataset(file_path,
             成二维
         label_num (int, optional): Defaults to None. 当cascading_label为True时，
             label_num为最里层维度的数量
-        num_parallel_calls (int, optional): Defaults to 8. 可以并行计算的数量
 
     Returns:
         Dataset: 返回dataset
@@ -32,28 +32,29 @@ def build_dataset(file_path,
         t.set_shape(shape)
         return t
 
+    cpu_count = os.cpu_count()
     dataset = tf.data.TextLineDataset(file_path)
     dataset = (dataset
                .map(lambda string: tf.string_split(
                    [string], delimiter=",").values,
-                   num_parallel_calls=num_parallel_calls)
+                   num_parallel_calls=cpu_count)
                .map(lambda strings: tf.string_to_number(strings, tf.int32),
-                    num_parallel_calls=num_parallel_calls))
+                    num_parallel_calls=cpu_count))
 
     if padding:  # 填充0至length长度
         dataset = dataset.map(lambda line: tf.pad(
             line, [[0, length - tf.shape(line)[0]]], constant_values=0),
-            num_parallel_calls=num_parallel_calls)
+            num_parallel_calls=cpu_count)
 
     if cascading_label:
         dataset = dataset.map(lambda line: tf.reshape(line, (-1, label_num)),
-                              num_parallel_calls=num_parallel_calls)
+                              num_parallel_calls=cpu_count)
 
     # 给dynamic tensor 提供 static shape 以方便后续使用
     data_shape = [length] if not cascading_label else [
         int(length / label_num), label_num]
     dataset = dataset.map(lambda line: _set_static_shape(line, data_shape),
-                          num_parallel_calls=num_parallel_calls)
+                          num_parallel_calls=cpu_count)
 
     return dataset
 
