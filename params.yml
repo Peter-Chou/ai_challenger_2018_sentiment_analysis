@@ -17,11 +17,11 @@ dropout_rate: 0.1
 
 # AttnConv parameters
 
-# transformer parameters
+## transformer parameters
 num_attention_stacks: 3
 num_heads: 4
 
-# Convolution parameters
+## Convolution parameters
 filter_size_list:
   - 10
   - 20
@@ -33,4 +33,18 @@ inner_dense_outshape:
 
 # Optimization parameters
 label_smooth: true
+epsilon: 0.1
+use_regularizer: false
 reg_const: 0.005
+
+# learning rate parameters
+learning_rate: 0.1
+momentum: 0.9
+# approximate 1 epoch when batch_size is 64 (trainset has 105,000 samples)
+first_decay_steps: 1500
+t_mul: 2.0  # t_mul times longer than previous time spent
+m_mul: 1.0 # m_mul ** i * learning_rate when ith restart start
+alpha: 0.0  # minimum lr during decay
+
+# training parameters
+train_steps: 100000
