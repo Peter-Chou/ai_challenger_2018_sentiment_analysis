@@ -45,9 +45,13 @@ def build_dataset(file_path,
         Dataset: 返回dataset
     """
 
+    def _label_generator(size):
+        while True:
+            yield [0] * size
+
     if file_path is None:
         dataset = tf.data.Dataset.from_generator(
-            lambda: label_generator(length),
+            lambda: _label_generator(length),
             output_types=tf.int32,
             output_shapes=tf.TensorShape([length]))
     else:
