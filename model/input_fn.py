@@ -89,7 +89,7 @@ def input_fn(sentences,
              prefetch=2):
     # TODO: complete docstring
 
-    dataset = tf.data.Dataset.zip((sentences, labels))
+    dataset = tf.data.Dataset.zip((sentences, labels)).cache()
 
     if is_training:
         dataset = dataset.shuffle(buffer_size=_SHUFFLE_BUFFER)
@@ -103,5 +103,7 @@ def input_fn(sentences,
 
     # sentence, label = iterator.get_next()
     # init_op = iterator.initializer
-
-    return dataset
+    # return dataset
+    iterator = dataset.make_one_shot_iterator()
+    features, labels = iterator.get_next()
+    return features, labels

@@ -3,6 +3,7 @@ max_len: 500
 chinese_word_size: 195198 # add <num> to vocab
 multi_categories: 20
 num_sentiment: 4
+vector_path: "./chinese_vectors/vectors.npy"
 
 # dataset parameters
 batch_size: 1

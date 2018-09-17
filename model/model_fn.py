@@ -16,7 +16,7 @@ def model_fn(
     is_training = (mode == tf.estimator.ModeKeys.TRAIN)
 
     x = features
-    labels = inputs["label"]
+    # labels = inputs["label"]
 
     if params.label_smooth:
         labels = tf.cast(labels, tf.float32)
@@ -25,7 +25,7 @@ def model_fn(
     # iterator_init_op = inputs["iterator_init_op"]
 
     # build embedding vectors
-    vector = word_embedding(x, vector_path, scale=False)
+    vector = word_embedding(x, params.vector_path, scale=False)
 
     # ! reduce the fiexed word dimensions to appropriate dimension
     if params.hidden_size != vector.get_shape().as_list()[-1]:
