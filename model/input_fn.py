@@ -7,6 +7,7 @@ import os
 import tensorflow as tf
 
 cpu_count = os.cpu_count()
+_SHUFFLE_BUFFER = 120000
 
 
 def _set_static_shape(t, shape):
@@ -83,16 +84,15 @@ def build_dataset(file_path,
 def input_fn(sentences,
              labels,
              batch_size=1,
+             is_training=False,
              repeat_count=1,
-             perform_shuffle=False,
-             buffer_size=32,
              prefetch=2):
-    # TODO: complete new version
+    # TODO: complete docstring
 
     dataset = tf.data.Dataset.zip((sentences, labels))
 
-    if perform_shuffle:
-        dataset = dataset.shuffle(buffer_size=buffer_size)
+    if is_training:
+        dataset = dataset.shuffle(buffer_size=_SHUFFLE_BUFFER)
 
     dataset = (dataset
                .repeat(count=repeat_count)
