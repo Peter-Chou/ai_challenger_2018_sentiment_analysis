@@ -7,15 +7,20 @@ from model.attention import (dense_logits, feedforward, inception,
 from model.embedding import position_embedding, word_embedding
 
 
-def build_model(mode, vector_path, inputs, params, reuse=False):
-    is_training = (mode == "train")
+# def build_model(mode, vector_path, inputs, params, reuse=False):
+def model_fn(
+        features,
+        labels,
+        mode,
+        params):
+    is_training = (mode == tf.estimator.ModeKeys.TRAIN)
 
-    x = inputs["sentence"]
+    x = features
     labels = inputs["label"]
 
     if params.label_smooth:
         labels = tf.cast(labels, tf.float32)
-        labels = label_smoothing(labels)
+        labels = label_smoothing(labels, epsilon=params.epsilon)
 
     # iterator_init_op = inputs["iterator_init_op"]
 
@@ -25,19 +30,20 @@ def build_model(mode, vector_path, inputs, params, reuse=False):
     # ! reduce the fiexed word dimensions to appropriate dimension
     if params.hidden_size != vector.get_shape().as_list()[-1]:
         # 原论文中使用全连接降维
-        # vector = tf.layers.dense(
-        #     vector,
-        #     params.hidden_size,
-        #     activation=None,
-        #     use_bias=False,
-        #     kernel_regularizer=tf.contrib.layers.l2_regularizer(1.0))
+        with tf.variable_scope("dimension_reduction"):
+            vector = tf.layers.dense(
+                vector,
+                params.hidden_size,
+                activation=None,
+                use_bias=False,
+                kernel_regularizer=tf.contrib.layers.l2_regularizer(1.0))
 
-        # ? (尝试) use conv1d to reduce the dimension (with shared weights)
-        vector = tf.layers.conv1d(
-            vector,
-            filters=params.hidden_size,
-            kernel_size=1,
-            kernel_regularizer=tf.contrib.layers.l2_regularizer(1.0))
+            #  (尝试) use conv1d to reduce the dimension (with shared weights)
+            # vector = tf.layers.conv1d(
+            #     vector,
+            #     filters=params.hidden_size,
+            #     kernel_size=1,
+            #     kernel_regularizer=tf.contrib.layers.l2_regularizer(1.0))
 
     # scale the word embedding
     vector = vector * (params.hidden_size ** 0.5)
@@ -77,26 +83,24 @@ def build_model(mode, vector_path, inputs, params, reuse=False):
     # (N, attention_stacks*T, C, 1)
     attentions = tf.expand_dims(attentions, -1)
 
-# ************************************************************
-# complete attention part, now CNN capture part
-# ************************************************************
+    # ************************************************************
+    # complete attention part, now CNN capture part
+    # ************************************************************
     logits = []
     # 每个category对应一个inception_maxpool classifier
     for topic in range(params.multi_categories):
-
-        features = inception(attentions,
-                             filter_size_list=params.filter_size_list,
-                             num_filters=params.num_filters,
-                             hidden_size=params.hidden_size,
-                             scope=f"category_{topic+1}_inception")  # (n, 1, 1, total_filter_num)
+        cnn_features = inception(attentions,
+                                 filter_size_list=params.filter_size_list,
+                                 num_filters=params.num_filters,
+                                 hidden_size=params.hidden_size,
+                                 scope=f"category_{topic+1}_inception")  # (n, 1, 1, total_filter_num)
 
         total_feature_num = len(params.filter_size_list) * params.num_filters
-
-        # features: (n, total_filter_num)
-        features = tf.reshape(features, (-1, total_feature_num))
+        # cnn_features: (n, total_filter_num)
+        cnn_features = tf.reshape(cnn_features, (-1, total_feature_num))
 
         # logit: (n, num_sentiment)
-        # logit = tf.layers.dense(features,
+        # logit = tf.layers.dense(cnn_features,
         #                         params.num_sentiment,
         #                         activation=None,
         #                         use_bias=True,
@@ -104,7 +108,7 @@ def build_model(mode, vector_path, inputs, params, reuse=False):
 
         # category_logit: (n, num_sentiment)
         category_logits = dense_logits(
-            features,
+            cnn_features,
             params.num_sentiment,
             kernel_regularizer=tf.contrib.layers.l2_regularizer(
                 1.0),
@@ -119,18 +123,58 @@ def build_model(mode, vector_path, inputs, params, reuse=False):
     # logits: (n, multi_categories, num_sentiment)
     logits = tf.stack(logits, axis=1)
 
-    # loss: (n, multi_categories)
-    loss = tf.nn.softmax_cross_entropy_with_logits_v2(
-        labels=labels, logits=logits)
-    # loss: scala tensor. return total batch loss
-    loss = tf.reduce_sum(loss)
+    # * train & eval common part
+    if (mode == tf.estimator.ModeKeys.TRAIN or
+            mode == tf.estimator.ModeKeys.EVAL):
+        # loss: (n, multi_categories)
+        loss = tf.nn.softmax_cross_entropy_with_logits_v2(
+            labels=labels, logits=logits)
+        # loss: scala tensor. return total batch loss
+        loss = tf.reduce_sum(loss, axis=1)  # (n,)
+        loss = tf.reduce_mean(loss, axis=0)
 
-    if mode == "infer":
+        if params.use_regularizer:
+            loss_reg = sum(tf.get_collection(
+                tf.GraphKeys.REGULARIZATION_LOSSES))
+            loss += params.reg_const * loss_reg
+    else:
+        loss = None
+
+    # * train specific part
+    if (mode == tf.estimator.ModeKeys.TRAIN):
+        # TODO: params add
+        learning_rate = tf.train.cosine_decay_restarts(
+            learning_rate=params.learning_rate,
+            global_step=tf.train.get_or_create_global_step(),
+            first_decay_steps=params.first_decay_steps,
+            t_mul=params.t_mul,
+            m_mul=params.m_mul,
+            alpha=params.alpha,
+            name="learning_rate")
+        optimizer = tf.train.MomentumOptimizer(
+            learning_rate=learning_rate,
+            momentum=params.momentum)
+        train_op = optimizer.minimize(
+            loss,
+            global_step=tf.train.get_or_create_global_step())
+    else:
+        train_op = None
+
+    # * predict part
+    if mode == tf.estimator.ModeKeys.PREDICT:
         prediction = tf.squeeze(logits)
         prediction = tf.subtract(tf.argmax(prediction, axis=1), 2)
+        predictions = {
+            "classes": prediction
+        }
+        export_outputs = {
+            "classify": tf.estimator.export.PredictOutput(predictions)
+        }
+    else:
+        predictions = None
+        export_outputs = None
 
-    return loss
-
-
-if __name__ == "__main__":
-    main()
+    return tf.estimator.EstimatorSpec(mode=mode,
+                                      predictions=predictions,
+                                      loss=loss,
+                                      train_op=train_op)
