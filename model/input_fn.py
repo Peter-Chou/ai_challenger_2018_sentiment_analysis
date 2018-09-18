@@ -85,11 +85,16 @@ def input_fn(sentences,
              labels,
              batch_size=1,
              is_training=False,
+             is_test=False,
              repeat_count=1,
              prefetch=2):
     # TODO: complete docstring
 
-    dataset = tf.data.Dataset.zip((sentences, labels)).cache()
+    dataset = tf.data.Dataset.zip((sentences, labels))
+
+    # train & eval 时将数据全部加入内存
+    if not is_test:
+        dataset = dataset.cache()
 
     if is_training:
         dataset = dataset.shuffle(buffer_size=_SHUFFLE_BUFFER)
