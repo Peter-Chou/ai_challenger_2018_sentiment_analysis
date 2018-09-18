@@ -49,3 +49,7 @@ alpha: 0.0  # minimum lr during decay
 
 # training parameters
 train_steps: 100000
+
+
+# hook parameters
+print_n_step: 2
