@@ -34,7 +34,4 @@ class _LoggerHook(tf.train.SessionRunHook):
             current_gstep = run_values.results[1]
             lr = run_values.results[2]
             logger.info(
-                f"step: {current_gstep}\t loss: {loss_value:.2f}\t lr: {lr:0.5f}\t spent: {duration:.1f} seconds")
-            # print(
-            #     f"step: {current_gstep}\t loss: {loss_value:.2f}\t",
-            #     f"lr: {lr:0.5f}\t spent: {duration:.1f} seconds")
+                f"step: {current_gstep:>7}\t loss: {loss_value:.2f}\t lr: {lr:0.5f}\t spent: {duration:.1f} seconds")
