@@ -1,4 +1,5 @@
 import argparse
+import os
 
 import numpy as np
 import tensorflow as tf
@@ -12,17 +13,38 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--model_dir', default=None,
                     help="Directory containing the model graph & metrics")
 
-parser.add_argument('--mode', default=None,
-                    help="train or eval")
+parser.add_argument('--test_dir', default="data/test/a",
+                    help="Directory containing the test data")
+
+parser.add_argument(
+    "-e", "--eval", help="evaluate", action="store_true")
 parser.add_argument(
     "-t", "--test", help="predict", action="store_true")
+
+
+def save_or_update_predict(predicts,
+                           dirname,
+                           predict_save_name):
+    for filename in os.listdir(dirname):
+        if "sentiment_analysis" in filename:
+            original_test_data = os.path.join(dirname, filename)
+            predict_save_file = os.path.join(dirname, predict_save_name)
+        else:
+            raise Exception(
+                "original test file must be in test folder and it's name must be unchanged")
+    if os.path.isfile(predict_save_file):
+        os.remove(predict_save_file)
+
+    test_data = pd.read_csv(original_test_data)
+    test_data.iloc[:, 2:] = predicts  # replace in place
+    test_data.to_csv(predict_save_file, index=False)
 
 
 def main(unused):
     params = Params("params.yml")
     args = parser.parse_args()
     if args.model_dir is None:
-        raise Exception("must give a folder for model")
+        raise Exception("You must give a folder to save / retore the model")
 
     # load training data
     train_feature = build_dataset(
@@ -50,7 +72,7 @@ def main(unused):
 
     # load test data
     test_feature = build_dataset(
-        "./data/test/a/sentences_idx.csv",
+        os.path.join(args.test_dir, "sentences_idx.csv"),
         length=params.max_len,
         padding=True)
     test_label = build_dataset(  # pseudo labels
@@ -83,6 +105,7 @@ def main(unused):
                         test_label,
                         batch_size=1,
                         is_training=False,
+                        is_test=True,
                         repeat_count=1)
 
     # define strategy
@@ -125,7 +148,14 @@ def main(unused):
 
     else:  # 'pred'
         predict_results = nn.predict(input_fn=test_input_fn)
-        print(predict_results)
+        results = []
+        for result in predict_results:
+            results.append(result)
+        results = np.asarray(results)
+        save_or_update_predict(results,
+                               args.test_dir,
+                               "ai_competition_submission_predict_label_data.csv")
+        # print(next(predict_results))
 
 
 if __name__ == "__main__":
