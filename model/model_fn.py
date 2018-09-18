@@ -19,7 +19,7 @@ def model_fn(
     x = features
     # labels = inputs["label"]
 
-    if params.label_smooth:
+    if params.label_smooth and labels is not None:
         labels = tf.cast(labels, tf.float32)
         labels = label_smoothing(labels, epsilon=params.epsilon)
 
@@ -169,10 +169,11 @@ def model_fn(
 
     # * predict part
     if mode == tf.estimator.ModeKeys.PREDICT:
-        prediction = tf.squeeze(logits)
-        prediction = tf.subtract(tf.argmax(prediction, axis=1), 2)
+        # 在预测时， logits：(multi_categories, num_sentiment)
+        # pred: (multi_categories,)
+        pred = tf.subtract(tf.argmax(logits, axis=-1), 2)
         predictions = {
-            "classes": prediction
+            "classes": pred,
         }
         export_outputs = {
             "classify": tf.estimator.export.PredictOutput(predictions)
@@ -181,9 +182,11 @@ def model_fn(
         predictions = None
         export_outputs = None
 
+    training_hooks = [custom_logger] if is_training else None
+
     return tf.estimator.EstimatorSpec(mode=mode,
                                       predictions=predictions,
                                       loss=loss,
                                       train_op=train_op,
-                                      training_hooks=[custom_logger]
+                                      training_hooks=training_hooks
                                       )
