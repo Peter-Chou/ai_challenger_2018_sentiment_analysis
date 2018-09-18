@@ -28,23 +28,22 @@ def normalize(inputs,
     Returns:
       A tensor with the same shape and data dtype as `inputs`.
     '''
-    # TODO : change tf.Variable to tf.get_variable (may cause restore problem)
     with tf.variable_scope(scope, reuse=reuse):
         inputs_shape = inputs.get_shape()
         params_shape = inputs_shape[-1:]
 
         mean, variance = tf.nn.moments(inputs, [-1], keep_dims=True)
-        # beta = tf.get_variable("beta",
-        #                        shape=params_shape,
-        #                        dtype=tf.float64,
-        #                        initializer=tf.zeros_initializer())
-        # gamma = tf.get_variable("gamma",
-        #                         shape=params_shape,
-        #                         dtype=tf.float64,
-        #                         initializer=tf.ones_initializer())
-
-        beta = tf.Variable(tf.zeros(params_shape))
-        gamma = tf.Variable(tf.ones(params_shape))
+        beta = tf.get_variable("beta",
+                               shape=params_shape,
+                               dtype=tf.float32,
+                               initializer=tf.zeros_initializer())
+        gamma = tf.get_variable("gamma",
+                                shape=params_shape,
+                                dtype=tf.float32,
+                                initializer=tf.ones_initializer())
+        # 原实现代码
+        # beta = tf.Variable(tf.zeros(params_shape))
+        # gamma = tf.Variable(tf.ones(params_shape))
         normalized = (inputs - mean) / ((variance + epsilon) ** (.5))
         outputs = gamma * normalized + beta
 
@@ -188,7 +187,8 @@ def multihead_attention(queries,
         outputs += queries
 
         # Normalize
-        outputs = normalize(outputs)  # (N, T_q, C)
+        outputs = normalize(outputs, scope="ln_1")  # (N, T_q, C)
+        # outputs = normalize(outputs)  # (N, T_q, C)
 
     return outputs
 
@@ -225,7 +225,8 @@ def feedforward(inputs,
         outputs += inputs
 
         # Normalize
-        outputs = normalize(outputs)
+        outputs = normalize(outputs, scope="ln_2")
+        # outputs = normalize(outputs)
 
     return outputs
 
