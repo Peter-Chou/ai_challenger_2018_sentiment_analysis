@@ -5,6 +5,7 @@ import tensorflow as tf
 from model.attention import (dense_logits, feedforward, inception,
                              label_smoothing, multihead_attention)
 from model.embedding import position_embedding, word_embedding
+from model.hook import _LoggerHook
 
 
 # def build_model(mode, vector_path, inputs, params, reuse=False):
@@ -72,7 +73,7 @@ def model_fn(
                                          is_training=is_training,
                                          causality=False)
 
-    #         # feed forward
+            # feed forward
             vector = feedforward(vector,
                                  num_units=[4*params.hidden_size, params.hidden_size])
             attns.append(vector)
@@ -126,26 +127,28 @@ def model_fn(
     # * train & eval common part
     if (mode == tf.estimator.ModeKeys.TRAIN or
             mode == tf.estimator.ModeKeys.EVAL):
+
+        gstep = tf.train.get_or_create_global_step()
+
         # loss: (n, multi_categories)
         loss = tf.nn.softmax_cross_entropy_with_logits_v2(
             labels=labels, logits=logits)
-        # loss: scala tensor. return total batch loss
         loss = tf.reduce_sum(loss, axis=1)  # (n,)
-        loss = tf.reduce_mean(loss, axis=0)
+        loss = tf.reduce_mean(loss, axis=0)  # scala
 
         if params.use_regularizer:
             loss_reg = sum(tf.get_collection(
                 tf.GraphKeys.REGULARIZATION_LOSSES))
             loss += params.reg_const * loss_reg
+        loss = tf.identity(loss, name="loss")
     else:
         loss = None
 
     # * train specific part
     if (mode == tf.estimator.ModeKeys.TRAIN):
-        # TODO: params add
         learning_rate = tf.train.cosine_decay_restarts(
             learning_rate=params.learning_rate,
-            global_step=tf.train.get_or_create_global_step(),
+            global_step=gstep,
             first_decay_steps=params.first_decay_steps,
             t_mul=params.t_mul,
             m_mul=params.m_mul,
@@ -156,7 +159,11 @@ def model_fn(
             momentum=params.momentum)
         train_op = optimizer.minimize(
             loss,
-            global_step=tf.train.get_or_create_global_step())
+            global_step=gstep)
+
+        # add custom training logger
+        custom_logger = _LoggerHook(
+            loss, gstep, learning_rate, params.print_n_step)
     else:
         train_op = None
 
@@ -177,4 +184,6 @@ def model_fn(
     return tf.estimator.EstimatorSpec(mode=mode,
                                       predictions=predictions,
                                       loss=loss,
-                                      train_op=train_op)
+                                      train_op=train_op,
+                                      training_hooks=[custom_logger]
+                                      )
