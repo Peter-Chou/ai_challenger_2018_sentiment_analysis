@@ -2,6 +2,7 @@ import argparse
 import os
 
 import numpy as np
+import pandas as pd
 import tensorflow as tf
 
 from model.helper import Params
@@ -29,9 +30,7 @@ def save_or_update_predict(predicts,
         if "sentiment_analysis" in filename:
             original_test_data = os.path.join(dirname, filename)
             predict_save_file = os.path.join(dirname, predict_save_name)
-        else:
-            raise Exception(
-                "original test file must be in test folder and it's name must be unchanged")
+
     if os.path.isfile(predict_save_file):
         os.remove(predict_save_file)
 
@@ -149,13 +148,12 @@ def main(unused):
     else:  # 'pred'
         predict_results = nn.predict(input_fn=test_input_fn)
         results = []
-        for result in predict_results:
-            results.append(result)
+        for result in predict_results:  # result is dict object
+            results.append(result["classes"])
         results = np.asarray(results)
         save_or_update_predict(results,
                                args.test_dir,
                                "ai_competition_submission_predict_label_data.csv")
-        # print(next(predict_results))
 
 
 if __name__ == "__main__":
