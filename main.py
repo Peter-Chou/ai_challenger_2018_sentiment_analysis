@@ -85,11 +85,11 @@ def main(unused):
                         is_training=False,
                         repeat_count=1)
 
-        # define strategy
-        # NUM_GPUS = 2
-        # strategy = tf.contrib.distribute.MirroredStrategy(num_gpus=NUM_GPUS)
+    # define strategy
+    # NUM_GPUS = 2
+    # strategy = tf.contrib.distribute.MirroredStrategy(num_gpus=NUM_GPUS)
 
-        # define config
+    # define config
     config = tf.estimator.RunConfig(
         model_dir=args.model_dir,
         keep_checkpoint_max=10,
@@ -104,10 +104,12 @@ def main(unused):
         params=params
     )
 
-    # define spec
+    # define train spec
     train_spec = tf.estimator.TrainSpec(
         train_input_fn,
         max_steps=params.train_steps)
+
+    # define eval spec
     eval_spec = tf.estimator.EvalSpec(
         eval_input_fn,
         steps=100,
@@ -127,4 +129,6 @@ def main(unused):
 
 
 if __name__ == "__main__":
+    # Enable logging for tf.estimator
+    tf.logging.set_verbosity(tf.logging.INFO)
     tf.app.run(main)
