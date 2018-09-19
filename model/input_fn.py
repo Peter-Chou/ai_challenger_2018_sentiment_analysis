@@ -92,10 +92,6 @@ def input_fn(sentences,
 
     dataset = tf.data.Dataset.zip((sentences, labels))
 
-    # train & eval 时将数据全部加入内存
-    if not is_test:
-        dataset = dataset.cache()
-
     if is_training:
         dataset = dataset.shuffle(buffer_size=_SHUFFLE_BUFFER)
 
