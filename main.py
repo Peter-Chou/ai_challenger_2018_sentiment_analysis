@@ -116,7 +116,7 @@ def main(unused):
         model_dir=args.model_dir,
         tf_random_seed=params.random_seed,
         keep_checkpoint_max=10,
-        save_checkpoints_steps=100,
+        save_checkpoints_steps=1000,
         # train_distribute=strategy
     )
 
@@ -136,6 +136,7 @@ def main(unused):
     eval_spec = tf.estimator.EvalSpec(
         eval_input_fn,
         steps=100,
+        throttle_secs=0,
         # exporters=[exporters],
         name="eval")
 
