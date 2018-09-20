@@ -345,10 +345,11 @@ def inception(inputs,
             pooled_outputs.append(feature)
 
     # (N, 1, 1, len(params.filter_sizes) * params.num_filters)
-    if len(filter_size_list) > 2:
-        return tf.concat(pooled_outputs, -1)
-    else:
-        return feature
+    return tf.concat(pooled_outputs, -1)
+    # if len(filter_size_list) > 2:
+    #     return tf.concat(pooled_outputs, -1)
+    # else:
+    #     return feature
 
 
 def dense_logits(inputs,
