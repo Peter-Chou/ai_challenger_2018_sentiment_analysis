@@ -18,7 +18,7 @@ hidden_size: 100 # reduce word dimension to 100
 # AttnConv parameters
 
 ## transformer parameters
-num_attention_stacks: 4
+num_attention_stacks: 3
 num_heads: 2
 
 ## Convolution parameters
