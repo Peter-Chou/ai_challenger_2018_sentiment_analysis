@@ -19,7 +19,7 @@ hidden_size: 100 # reduce word dimension to 100
 
 ## transformer parameters
 num_attention_stacks: 4
-num_heads: 4
+num_heads: 2
 
 ## Convolution parameters
 filter_size_list:
