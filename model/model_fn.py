@@ -52,7 +52,7 @@ def model_fn(
     # 给词向量 增加位置信息
     vector += position_embedding(x,
                                  num_units=params.hidden_size,
-                                 mask_pad=True,
+                                 #  mask_pad=True,
                                  #   zero_pad=False,
                                  scale=False)
 
