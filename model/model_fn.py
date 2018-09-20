@@ -37,6 +37,7 @@ def model_fn(
                 params.hidden_size,
                 activation=None,
                 use_bias=False,
+                kernel_initializer=tf.contrib.layers.xavier_initializer(),
                 kernel_regularizer=tf.contrib.layers.l2_regularizer(1.0))
 
             #  (尝试) use conv1d to reduce the dimension (with shared weights)
@@ -70,6 +71,7 @@ def model_fn(
                                          num_units=params.hidden_size,
                                          num_heads=params.num_heads,
                                          dropout_rate=params.dropout_rate,
+                                         kernel_initializer=tf.contrib.layers.xavier_initializer(),
                                          kernel_regularizer=tf.contrib.layers.l2_regularizer(
                                              1.0),
                                          is_training=is_training,
@@ -77,6 +79,7 @@ def model_fn(
 
             # feed forward
             vector = feedforward(vector,
+                                 kernel_initializer=tf.contrib.layers.xavier_initializer(),
                                  #  kernel_regularizer=tf.contrib.layers.l2_regularizer(
                                  #      1.0),
                                  num_units=[2 * params.hidden_size, params.hidden_size])
@@ -99,6 +102,7 @@ def model_fn(
                                  filter_size_list=params.filter_size_list,
                                  num_filters=params.num_filters,
                                  hidden_size=params.hidden_size,
+                                 kernel_initializer=tf.contrib.layers.xavier_initializer(),
                                  kernel_regularizer=tf.contrib.layers.l2_regularizer(
                                      1.0),
                                  scope=f"category_{topic+1}_inception")  # (n, 1, 1, total_filter_num)
@@ -120,6 +124,7 @@ def model_fn(
             params.num_sentiment,
             kernel_regularizer=tf.contrib.layers.l2_regularizer(
                 1.0),
+            kernel_initializer=tf.contrib.layers.xavier_initializer(),
             scope=f"category_{topic+1}_logits",
             inner_dense_outshape=params.inner_dense_outshape,
             inner_dense_activation=tf.tanh,

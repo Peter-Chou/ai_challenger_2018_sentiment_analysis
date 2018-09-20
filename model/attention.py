@@ -55,6 +55,7 @@ def multihead_attention(queries,
                         num_units=None,
                         num_heads=8,
                         dropout_rate=0,
+                        kernel_initializer=None,
                         kernel_regularizer=None,
                         is_training=True,
                         causality=False,
@@ -67,6 +68,7 @@ def multihead_attention(queries,
       keys: A 3d tensor with shape of [N, T_k, C_k].
       num_units: A scalar. Attention size.
       dropout_rate: A floating point number.
+      kernel_initializer: weight initializer
       kernel_regularizer: weight regularizer
       is_training: Boolean. Controller of mechanism for dropout.
       causality: Boolean. If true, units that reference the future are masked.
@@ -91,14 +93,17 @@ def multihead_attention(queries,
         # ? remove activation?
         # 使得不同的multi-head attention 都回应不同的query，以及句子的不同子理解
         Q = tf.layers.dense(queries, num_units,
+                            kernel_initializer=kernel_initializer,
                             kernel_regularizer=kernel_regularizer,
                             activation=tf.nn.relu)  # (N, T_q, C)
         K = tf.layers.dense(keys,
                             num_units,
+                            kernel_initializer=kernel_initializer,
                             kernel_regularizer=kernel_regularizer,
                             activation=tf.nn.relu)  # (N, T_k, C)
         V = tf.layers.dense(keys,
                             num_units,
+                            kernel_initializer=kernel_initializer,
                             kernel_regularizer=kernel_regularizer,
                             activation=tf.nn.relu)  # (N, T_k, C)
 
@@ -201,6 +206,7 @@ def multihead_attention(queries,
 
 
 def feedforward(inputs,
+                kernel_initializer=None,
                 kernel_regularizer=None,
                 num_units=[2048, 512],
                 scope="multihead_attention",
@@ -209,6 +215,7 @@ def feedforward(inputs,
 
     Args:
       inputs: A 3d tensor with shape of [N, T, C].
+      kernel_initializer: weight initializer
       kernel_regularizer: weight regularizer
       num_units: A list of two integers.
       scope: Optional scope for `variable_scope`.
@@ -223,12 +230,14 @@ def feedforward(inputs,
         # kernel_size = 1 即 element-wise (T中每个元素从C维变换到num_units[0]维)
         params = {"inputs": inputs, "filters": num_units[0], "kernel_size": 1,
                   "activation": tf.nn.relu, "use_bias": True,
+                  "kernel_initializer": kernel_initializer,
                   "kernel_regularizer": kernel_regularizer}
         outputs = tf.layers.conv1d(**params)
 
         # Readout layer
         params = {"inputs": outputs, "filters": num_units[1], "kernel_size": 1,
                   "activation": None, "use_bias": True,
+                  "kernel_initializer": kernel_initializer,
                   "kernel_regularizer": kernel_regularizer}
         outputs = tf.layers.conv1d(**params)
 
@@ -248,6 +257,7 @@ def conv_maxpool(inputs,
                  filter_size,
                  num_filters,
                  hidden_size,
+                 kernel_initializer=None,
                  kernel_regularizer=None,
                  scope="conv_maxpool",
                  reuse=None):
@@ -280,6 +290,7 @@ def conv_maxpool(inputs,
             inputs,
             filters=num_filters,
             kernel_size=(filter_size, hidden_size),
+            kernel_initializer=kernel_initializer,
             kernel_regularizer=kernel_regularizer,
             activation=tf.nn.relu)
 
@@ -298,6 +309,7 @@ def inception(inputs,
               filter_size_list,
               num_filters,
               hidden_size,
+              kernel_initializer=None,
               kernel_regularizer=None,
               scope="inception",
               reuse=None):
@@ -326,6 +338,7 @@ def inception(inputs,
                                    filter_size=filter_size,
                                    num_filters=num_filters,
                                    hidden_size=hidden_size,
+                                   kernel_initializer=kernel_initializer,
                                    kernel_regularizer=kernel_regularizer,
                                    scope=f"conv_maxpool_{filter_size}_filter",
                                    reuse=reuse)
@@ -341,6 +354,7 @@ def inception(inputs,
 def dense_logits(inputs,
                  label_num,
                  kernel_regularizer,
+                 kernel_initializer=None,
                  scope="dense_logits",
                  inner_dense_outshape=None,
                  inner_dense_activation=tf.nn.relu,
@@ -374,6 +388,7 @@ def dense_logits(inputs,
                 out_size,
                 activation=inner_dense_activation,
                 use_bias=use_bias,
+                kernel_initializer=kernel_initializer,
                 kernel_regularizer=kernel_regularizer
             )
 
@@ -382,6 +397,7 @@ def dense_logits(inputs,
             label_num,
             activation=None,
             use_bias=use_bias,
+            kernel_initializer=kernel_initializer,
             kernel_regularizer=kernel_regularizer
         )
 
