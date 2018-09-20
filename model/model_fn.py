@@ -61,7 +61,7 @@ def model_fn(
                                training=tf.convert_to_tensor(is_training))
 
     # # transformer attention stacks
-    attns = []
+    # attns = []
     for i in range(params.num_attention_stacks):
         with tf.variable_scope(f"num_attention_stacks_{i + 1}"):
             # multi-head attention
@@ -76,9 +76,10 @@ def model_fn(
             # feed forward
             vector = feedforward(vector,
                                  num_units=[4*params.hidden_size, params.hidden_size])
-            attns.append(vector)
+            # attns.append(vector)
     # concat all attentions (like DenseNet)
-    attentions = tf.concat(attns, 1)  # (N, attention_stacks*T, C)
+    # attentions = tf.concat(attns, 1)  # (N, attention_stacks*T, C)
+    attentions = vector
 
     # 最里增加一维，以模拟一维黑白通道
     # (N, attention_stacks*T, C, 1)
