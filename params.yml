@@ -7,7 +7,7 @@ vector_path: "./chinese_vectors/vectors.npy"
 
 # dataset parameters
 # batch_size: 1
-batch_size: 64
+batch_size: 32
 prefetch: 2
 buffer_size: 120000
 
@@ -39,7 +39,7 @@ dropout_rate: 0.1
 
 # learning rate parameters
 learning_rate: 0.01
-momentum: 0.8
+momentum: 0.7
 first_decay_steps: 1200
 t_mul: 2.0  # t_mul times longer than previous time spent
 m_mul: 0.9 # m_mul ** i * learning_rate when ith restart start
