@@ -55,6 +55,7 @@ def multihead_attention(queries,
                         num_units=None,
                         num_heads=8,
                         dropout_rate=0,
+                        kernel_regularizer=None,
                         is_training=True,
                         causality=False,
                         scope="multihead_attention",
@@ -66,6 +67,7 @@ def multihead_attention(queries,
       keys: A 3d tensor with shape of [N, T_k, C_k].
       num_units: A scalar. Attention size.
       dropout_rate: A floating point number.
+      kernel_regularizer: weight regularizer
       is_training: Boolean. Controller of mechanism for dropout.
       causality: Boolean. If true, units that reference the future are masked.
       num_heads: An int. Number of heads.
@@ -89,11 +91,16 @@ def multihead_attention(queries,
         # ? remove activation?
         # 使得不同的multi-head attention 都回应不同的query，以及句子的不同子理解
         Q = tf.layers.dense(queries, num_units,
+                            kernel_regularizer=kernel_regularizer,
                             activation=tf.nn.relu)  # (N, T_q, C)
-        K = tf.layers.dense(
-            keys, num_units, activation=tf.nn.relu)  # (N, T_k, C)
-        V = tf.layers.dense(
-            keys, num_units, activation=tf.nn.relu)  # (N, T_k, C)
+        K = tf.layers.dense(keys,
+                            num_units,
+                            kernel_regularizer=kernel_regularizer,
+                            activation=tf.nn.relu)  # (N, T_k, C)
+        V = tf.layers.dense(keys,
+                            num_units,
+                            kernel_regularizer=kernel_regularizer,
+                            activation=tf.nn.relu)  # (N, T_k, C)
 
         # Split and concat
         # 将Q, K, V 分成 num_heads 个子集合
@@ -194,6 +201,7 @@ def multihead_attention(queries,
 
 
 def feedforward(inputs,
+                kernel_regularizer=None,
                 num_units=[2048, 512],
                 scope="multihead_attention",
                 reuse=None):
@@ -201,6 +209,7 @@ def feedforward(inputs,
 
     Args:
       inputs: A 3d tensor with shape of [N, T, C].
+      kernel_regularizer: weight regularizer
       num_units: A list of two integers.
       scope: Optional scope for `variable_scope`.
       reuse: Boolean, whether to reuse the weights of a previous layer
@@ -213,12 +222,14 @@ def feedforward(inputs,
         # Inner layer
         # kernel_size = 1 即 element-wise (T中每个元素从C维变换到num_units[0]维)
         params = {"inputs": inputs, "filters": num_units[0], "kernel_size": 1,
-                  "activation": tf.nn.relu, "use_bias": True}
+                  "activation": tf.nn.relu, "use_bias": True,
+                  "kernel_regularizer": kernel_regularizer}
         outputs = tf.layers.conv1d(**params)
 
         # Readout layer
         params = {"inputs": outputs, "filters": num_units[1], "kernel_size": 1,
-                  "activation": None, "use_bias": True}
+                  "activation": None, "use_bias": True,
+                  "kernel_regularizer": kernel_regularizer}
         outputs = tf.layers.conv1d(**params)
 
         # Residual connection
@@ -237,6 +248,7 @@ def conv_maxpool(inputs,
                  filter_size,
                  num_filters,
                  hidden_size,
+                 kernel_regularizer=None,
                  scope="conv_maxpool",
                  reuse=None):
     """conv + maxpool
@@ -250,6 +262,7 @@ def conv_maxpool(inputs,
             选用filter_size个attention作为filter的窗口, 每次按一个attention滑动
         num_filters (int): 一个filter生成的feature map数量
         hidden_size (int): attention的维度
+        kernel_regularizer: weight regularizer
         scope (str, optional):  Defaults to "conv_maxpool". Optional scope
         reuse (Bool, optional): Defaults to None. whether to reuse the weights
             of a previous layer by the same name
@@ -267,6 +280,7 @@ def conv_maxpool(inputs,
             inputs,
             filters=num_filters,
             kernel_size=(filter_size, hidden_size),
+            kernel_regularizer=kernel_regularizer,
             activation=tf.nn.relu)
 
         # pool 为 (n, 1, 1, params.num_filters)
@@ -284,6 +298,7 @@ def inception(inputs,
               filter_size_list,
               num_filters,
               hidden_size,
+              kernel_regularizer=None,
               scope="inception",
               reuse=None):
     """将不同filter_size得到的不同特征组合在一起并返回
@@ -293,6 +308,7 @@ def inception(inputs,
         filter_size_list (A list of int): 含有多个filter_size的list
         num_filters (int): 一个filter生成的feature map数量
         hidden_size (int): attention的维度
+        kernel_regularizer: weight regularizer
         scope (str, optional):  Defaults to "conv_maxpool". Optional scope
         reuse (Bool, optional): Defaults to None. whether to reuse the weights
             of a previous layer by the same name
@@ -310,6 +326,7 @@ def inception(inputs,
                                    filter_size=filter_size,
                                    num_filters=num_filters,
                                    hidden_size=hidden_size,
+                                   kernel_regularizer=kernel_regularizer,
                                    scope=f"conv_maxpool_{filter_size}_filter",
                                    reuse=reuse)
             pooled_outputs.append(feature)

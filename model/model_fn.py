@@ -70,12 +70,16 @@ def model_fn(
                                          num_units=params.hidden_size,
                                          num_heads=params.num_heads,
                                          dropout_rate=params.dropout_rate,
+                                         kernel_regularizer=tf.contrib.layers.l2_regularizer(
+                                             1.0),
                                          is_training=is_training,
                                          causality=False)
 
             # feed forward
             vector = feedforward(vector,
-                                 num_units=[4*params.hidden_size, params.hidden_size])
+                                 #  kernel_regularizer=tf.contrib.layers.l2_regularizer(
+                                 #      1.0),
+                                 num_units=[2 * params.hidden_size, params.hidden_size])
             # attns.append(vector)
     # concat all attentions (like DenseNet)
     # attentions = tf.concat(attns, 1)  # (N, attention_stacks*T, C)
@@ -95,6 +99,8 @@ def model_fn(
                                  filter_size_list=params.filter_size_list,
                                  num_filters=params.num_filters,
                                  hidden_size=params.hidden_size,
+                                 kernel_regularizer=tf.contrib.layers.l2_regularizer(
+                                     1.0),
                                  scope=f"category_{topic+1}_inception")  # (n, 1, 1, total_filter_num)
 
         total_feature_num = len(params.filter_size_list) * params.num_filters
