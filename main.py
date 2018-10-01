@@ -116,7 +116,7 @@ def main(unused):
         model_dir=args.model_dir,
         tf_random_seed=params.random_seed,
         keep_checkpoint_max=10,
-        save_checkpoints_steps=1000,
+        save_checkpoints_steps=params.save_n_step,
         # train_distribute=strategy
     )
 

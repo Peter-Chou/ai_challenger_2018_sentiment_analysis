@@ -51,4 +51,4 @@ random_seed: 100
 
 
 # hook parameters
-print_n_step: 1
+print_n_step: 20
