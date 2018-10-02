@@ -169,9 +169,11 @@ def model_fn(
         optimizer = tf.train.MomentumOptimizer(
             learning_rate=learning_rate,
             momentum=params.momentum)
-        train_op = optimizer.minimize(
-            loss,
-            global_step=gstep)
+
+        gradients, variables = zip(*optimizer.compute_gradients(loss))
+        gradients, _ = tf.clip_by_global_norm(gradients, params.max_norm)
+        train_op = optimizer.apply_gradients(zip(gradients, variables),
+                                             global_step=gstep)
 
         # add custom training logger
         custom_logger = _LoggerHook(
