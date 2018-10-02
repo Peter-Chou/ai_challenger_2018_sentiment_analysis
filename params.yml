@@ -41,7 +41,7 @@ dropout_rate: 0.1
 # learning rate parameters
 learning_rate: 0.01
 momentum: 0.7
-first_decay_steps: 1200
+first_decay_steps: 2000
 t_mul: 2.0  # t_mul times longer than previous time spent
 m_mul: 0.9 # m_mul ** i * learning_rate when ith restart start
 alpha: 0.0  # minimum lr during decay
