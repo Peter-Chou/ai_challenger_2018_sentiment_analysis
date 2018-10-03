@@ -35,6 +35,7 @@ def save_or_update_predict(predicts,
         os.remove(predict_save_file)
 
     test_data = pd.read_csv(original_test_data)
+    test_data.iloc[:, 1] = ""  # erase contents
     test_data.iloc[:, 2:] = predicts  # replace in place
     test_data.to_csv(predict_save_file, index=False)
 
