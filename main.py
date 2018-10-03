@@ -116,7 +116,7 @@ def main(unused):
     config = tf.estimator.RunConfig(
         model_dir=args.model_dir,
         tf_random_seed=params.random_seed,
-        keep_checkpoint_max=10,
+        keep_checkpoint_max=params.keep_checkpoint_max,
         save_checkpoints_steps=params.save_n_step,
         # train_distribute=strategy
     )

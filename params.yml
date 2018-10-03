@@ -48,9 +48,10 @@ alpha: 0.0  # minimum lr during decay
 
 # training parameters
 train_steps: 50000
-random_seed: 5555
+random_seed: 1024
 
 
 # hook parameters
 print_n_step: 20
 save_n_step: 500
+keep_checkpoint_max: 20
