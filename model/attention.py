@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 
 """
-creates the deep learning model
-from https://github.com/Kyubyong/transformer/blob/master/modules.py
+创建模型所需的函数
+transformer part 代码主要借鉴自：
+https://github.com/Kyubyong/transformer/blob/master/modules.py
 """
 
 import numpy as np
@@ -10,7 +11,7 @@ import tensorflow as tf
 
 
 # ###################################################
-# Attention Part
+# Self Attention Part
 def normalize(inputs,
               epsilon=1e-8,
               scope="ln",
@@ -272,10 +273,10 @@ def conv_maxpool(inputs,
             选用filter_size个attention作为filter的窗口, 每次按一个attention滑动
         num_filters (int): 一个filter生成的feature map数量
         hidden_size (int): attention的维度
+      kernel_initializer: weight initializer
         kernel_regularizer: weight regularizer
-        scope (str, optional):  Defaults to "conv_maxpool". Optional scope
-        reuse (Bool, optional): Defaults to None. whether to reuse the weights
-            of a previous layer by the same name
+        scope (str, optional):  Defaults to "conv_maxpool". scope名称
+        reuse (Bool, optional): Defaults to None. 是否重复是否该命名域的变量
 
     Returns:
         4d tensor: (N, 1, 1, params.num_filters)
@@ -300,8 +301,6 @@ def conv_maxpool(inputs,
             conv,
             pool_size=(inputs_height - filter_size + 1, 1),
             strides=(1, 1))
-
-        # pool = tf.reshape(pool, (-1, params.num_filters))  # (n, params.num_filters)
         return pool
 
 
@@ -320,17 +319,15 @@ def inception(inputs,
         filter_size_list (A list of int): 含有多个filter_size的list
         num_filters (int): 一个filter生成的feature map数量
         hidden_size (int): attention的维度
+      kernel_initializer: weight initializer
         kernel_regularizer: weight regularizer
-        scope (str, optional):  Defaults to "conv_maxpool". Optional scope
-        reuse (Bool, optional): Defaults to None. whether to reuse the weights
-            of a previous layer by the same name
+        scope (str, optional):  Defaults to "conv_maxpool". scope名称
+        reuse (Bool, optional): Defaults to None. 是否重复是否该命名域的变量
 
     Returns:
         4d tensor: (N, 1, 1, len(params.filter_size_list) * params.num_filters)
     """
 
-    # filter_sizes = params.filter_sizes
-    # num_filters = params.hidden_size
     with tf.variable_scope(scope, reuse=reuse):
         pooled_outputs = []
         for filter_size in filter_size_list:
@@ -346,10 +343,6 @@ def inception(inputs,
 
     # (N, 1, 1, len(params.filter_sizes) * params.num_filters)
     return tf.concat(pooled_outputs, -1)
-    # if len(filter_size_list) > 2:
-    #     return tf.concat(pooled_outputs, -1)
-    # else:
-    #     return feature
 
 
 def dense_logits(inputs,
@@ -368,12 +361,13 @@ def dense_logits(inputs,
         inputs (2d tensor): 特征向量：(n, feature_num)
         label_num (int): label class的数量
         kernel_regularizer (regularizer): 矩阵w的约束器
+      kernel_initializer: weight initializer
         scope (str, optional): Defaults to "dense_logits". socpe namespace
         inner_dense_outshape (list, optional): Defaults to None.
             若为None / []，则没有中间的dense层
         inner_dense_activation (operation, optional): Defaults to tf.nn.relu
         use_bias (bool, optional): Defaults to True. 是否在所有层中使用偏置
-        reuse ([type], optional): Defaults to None.
+        reuse (Bool, optional): Defaults to None. 是否重复是否该命名域的变量
 
     Returns:
         2d tensor: (n, label_num)

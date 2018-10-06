@@ -8,7 +8,6 @@ from model.embedding import position_embedding, word_embedding
 from model.hook import _LoggerHook
 
 
-# def build_model(mode, vector_path, inputs, params, reuse=False):
 def model_fn(
         features,
         labels,
@@ -17,13 +16,10 @@ def model_fn(
     is_training = (mode == tf.estimator.ModeKeys.TRAIN)
 
     x = features
-    # labels = inputs["label"]
 
     if params.label_smooth and labels is not None:
         labels = tf.cast(labels, tf.float32)
         labels = label_smoothing(labels, epsilon=params.epsilon)
-
-    # iterator_init_op = inputs["iterator_init_op"]
 
     # build embedding vectors
     vector = word_embedding(x, params.vector_path, scale=False)
@@ -40,21 +36,12 @@ def model_fn(
                 kernel_initializer=tf.contrib.layers.xavier_initializer(),
                 kernel_regularizer=tf.contrib.layers.l2_regularizer(1.0))
 
-            #  (尝试) use conv1d to reduce the dimension (with shared weights)
-            # vector = tf.layers.conv1d(
-            #     vector,
-            #     filters=params.hidden_size,
-            #     kernel_size=1,
-            #     kernel_regularizer=tf.contrib.layers.l2_regularizer(1.0))
-
     # scale the word embedding
     vector = vector * (params.hidden_size ** 0.5)
 
     # 给词向量 增加位置信息
     vector += position_embedding(x,
                                  num_units=params.hidden_size,
-                                 #  mask_pad=True,
-                                 #   zero_pad=False,
                                  scale=False)
 
     # # * add dropout mask vector may be not a good idea
@@ -62,7 +49,6 @@ def model_fn(
                                training=tf.convert_to_tensor(is_training))
 
     # # transformer attention stacks
-    # attns = []
     for i in range(params.num_attention_stacks):
         with tf.variable_scope(f"num_attention_stacks_{i + 1}"):
             # multi-head attention
@@ -80,12 +66,7 @@ def model_fn(
             # feed forward
             vector = feedforward(vector,
                                  kernel_initializer=tf.contrib.layers.xavier_initializer(),
-                                 #  kernel_regularizer=tf.contrib.layers.l2_regularizer(
-                                 #      1.0),
                                  num_units=[2 * params.hidden_size, params.hidden_size])
-            # attns.append(vector)
-    # concat all attentions (like DenseNet)
-    # attentions = tf.concat(attns, 1)  # (N, attention_stacks*T, C)
     attentions = vector
 
     # 最里增加一维，以模拟一维黑白通道
@@ -110,13 +91,6 @@ def model_fn(
         total_feature_num = len(params.filter_size_list) * params.num_filters
         # cnn_features: (n, total_filter_num)
         cnn_features = tf.reshape(cnn_features, (-1, total_feature_num))
-
-        # logit: (n, num_sentiment)
-        # logit = tf.layers.dense(cnn_features,
-        #                         params.num_sentiment,
-        #                         activation=None,
-        #                         use_bias=True,
-        #                         kernel_regularizer=tf.contrib.layers.l2_regularizer(1.0))
 
         # category_logit: (n, num_sentiment)
         category_logits = dense_logits(

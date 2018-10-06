@@ -38,7 +38,7 @@ https://github.com/chdd/weibo/blob/master/stopwords/%E4%B8%AD%E6%96%87%E5%81%9C%
 - 特征共享层：由1词向量层 + 1位置向量层(提供位置信息) + 3个Transformer自注意力模块组成
 - 任务分类层：由1卷积层 + 1最大池化层 + 1全连接层组成
 
-其中卷积层的kernel的宽度为Transformer提取的Attention的维度大小，kernel的高度取10（即对临近的10个Attention进行卷积操作）。kernel的数量取64  
+其中卷积层kernel的宽度为Transformer提取的Attention的维度大小，kernel的高度取10（即对临近的10个Attention进行卷积操作）。kernel的数量取64  
 最大池化的作用范围为整个feature map，即每个Kernel得到的feature map在经过最大池化后被提炼为一个值
 
 ![attn_conv picture](/pic/attnconv_all_in_one.png)

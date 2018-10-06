@@ -26,6 +26,14 @@ parser.add_argument(
 def save_or_update_predict(predicts,
                            dirname,
                            predict_save_name):
+    """将推断得到的predicts按要求格式保存到本地
+
+    Args:
+        predicts (numpy array): 模型预测得到的结果集合
+        dirname (str): 测试集所在的文件夹地址
+        predict_save_name (str): 保存到本地的文件名称
+    """
+
     for filename in os.listdir(dirname):
         if "sentiment_analysis" in filename:
             original_test_data = os.path.join(dirname, filename)
