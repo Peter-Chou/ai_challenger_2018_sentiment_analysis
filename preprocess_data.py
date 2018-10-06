@@ -32,7 +32,6 @@ def _add_sub_or_unk_word(word, vocab):
         if tmp[i] in vocab:
             res.append(tmp[i])
     return res if len(res) > 0 else None
-    # // return res if len(res) > 0 else "<UNK>"  # 将vocab里未出现的word替换为<UNK>
 
 
 def _add_num_token(word):
@@ -44,6 +43,16 @@ def _add_num_token(word):
 
 
 def tokenize_sentence(line, vocab):
+    """句子分词
+
+    Args:
+        line (str): 原始的句子
+        vocab (dict): 词/词组为key，index为value的字典
+
+    Returns:
+        list: 包含词/词组的index的列表
+    """
+
     rule = re.compile("[^a-zA-Z0-9\u4e00-\u9fa5]")
     line = rule.sub('', line)
 
@@ -117,24 +126,6 @@ def sentence_label_save(file_path, w2i_dict, params, test=False):
                     labels.append(label)
                 writer_idx.writerow(sentence_idx)
 
-    # sentences_path = os.path.join(os.path.dirname(file_path), "sentences.csv")
-    # with open(sentences_path, 'w', newline='', encoding='utf-8', errors='ignore') as save_f:
-    #     with open(sentences_idx_path, 'w', newline='') as save_idx_f:
-    #         writer = csv.writer(save_f, delimiter=',')
-    #         writer_idx = csv.writer(save_idx_f, delimiter=',')
-    #         with open(file_path, newline='', encoding='utf-8', errors='ignore') as f:
-    #             reader = csv.reader(f, delimiter=',')
-    #             next(reader)
-    #             for idx, sentence, *label in reader:
-    #                 sentence = tokenize_sentence(sentence, w2i_dict)
-    #                 sentence_idx = _string_to_int_sentence(
-    #                     sentence, w2i_dict, params)
-    #                 if not test:
-    #                     label = [int(x) for x in label]
-    #                     labels.append(label)
-    #                 writer.writerow(sentence)
-    #                 writer_idx.writerow(sentence_idx)
-
     labels_path = os.path.join(os.path.dirname(file_path), "labels.csv")
     if not test:
         _write_rows_to_csv(labels, labels_path)
@@ -144,8 +135,8 @@ def load_chinese_table(chinese_path, stopwords_path):
     """返回去除停止词的word转int的词典
 
     Args:
-        chinese_path (str): [description]
-        stopwords_path (str): [description]
+        chinese_path (str): 中文词向量json文件地址
+        stopwords_path (str): 中文停用词地址
 
     Returns:
         dict: 返回 word->int 对应的字典
