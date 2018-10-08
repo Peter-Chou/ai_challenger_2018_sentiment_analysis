@@ -131,7 +131,7 @@ def model_fn(
 
         predictions = tf.nn.softmax(logits)
         predictions = tf.cast(tf.equal(tf.reduce_max(
-            predictions, axis=-1, keep_dims=True), a), tf.int32)
+            predictions, axis=-1, keep_dims=True), predictions), tf.int32)
         eval_metric_ops = {
             'avg_macro_f1': average_macro_f1(labels=labels,
                                              predictions=predictions)}
