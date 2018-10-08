@@ -6,6 +6,7 @@ from model.attention import (dense_logits, feedforward, inception,
                              label_smoothing, multihead_attention)
 from model.embedding import position_embedding, word_embedding
 from model.hook import _LoggerHook
+from model.metrics import average_macro_f1
 
 
 def model_fn(
@@ -127,8 +128,16 @@ def model_fn(
                 tf.GraphKeys.REGULARIZATION_LOSSES))
             loss += params.reg_const * loss_reg
         loss = tf.identity(loss, name="loss")
+
+        predictions = tf.nn.softmax(logits)
+        predictions = tf.cast(tf.equal(tf.reduce_max(
+            predictions, axis=-1, keep_dims=True), a), tf.int32)
+        eval_metric_ops = {
+            'avg_macro_f1': average_macro_f1(labels=labels,
+                                             predictions=predictions)}
     else:
         loss = None
+        eval_metric_ops = None
 
     # * train specific part
     if (mode == tf.estimator.ModeKeys.TRAIN):
@@ -176,5 +185,6 @@ def model_fn(
                                       predictions=predictions,
                                       loss=loss,
                                       train_op=train_op,
+                                      eval_metric_ops=eval_metric_ops,
                                       training_hooks=training_hooks
                                       )
