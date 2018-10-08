@@ -38,16 +38,16 @@ https://github.com/chdd/weibo/blob/master/stopwords/%E4%B8%AD%E6%96%87%E5%81%9C%
 - 特征共享层：由1词向量层 + 1位置向量层(提供位置信息) + 3个Transformer自注意力模块组成
 - 情感辨别层：由1卷积层 + 1最大池化层 + 1全连接层组成
 
-该模型的思路是模仿人处理该问题的行为：第一步理解语句（自注意力模块），第二步辨别情感（卷积+最大池化）
-
 ![attn_conv picture](/pic/attnconv_all_in_one.png)
+
+该模型的思路是模仿人处理该问题的行为：第一步理解语句（自注意力模块），第二步辨别情感（卷积+最大池化）
 
 ### Transformer: 自注意力模块
 
 Transformer是由谷歌团队在[Attention Is All You Need]( https://arxiv.org/pdf/1706.03762.pdf)首次提出，这里使用的是Encoder中的自注意力Transformer  
 自注意力Transformer对输入进行线性变换得到每个位置的query和(key, value)键值对,  
 通过对query和key求点积来寻找与query最相关的key并对其结果使用softmax得到该键值对的权重。  
-这个query的回答就是：所有 value * 对应权重的和。  
+这个query的回答就是：sum(value $\times$ 对应权重)  
 最后对这个query的回答进行维度缩放（使用position-wise feed forword，即一维卷积，stride=1, 激活函数为relu）  
 这样若有N个位置，得到N个query及其对应的回答
 
