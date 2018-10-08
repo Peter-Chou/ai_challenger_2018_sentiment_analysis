@@ -129,9 +129,9 @@ def model_fn(
             loss += params.reg_const * loss_reg
         loss = tf.identity(loss, name="loss")
 
-        predictions = tf.nn.softmax(logits)
-        # predictions = tf.cast(tf.equal(tf.reduce_max(
-        #     logits, axis=-1, keepdims=True), logits), tf.float32)
+        # predictions = tf.nn.softmax(logits)
+        predictions = tf.cast(tf.equal(tf.reduce_max(
+            logits, axis=-1, keepdims=True), logits), tf.float32)
         eval_metric_ops = {
             'avg_macro_f1': average_macro_f1(labels=tf.cast(labels, tf.float32),
                                              predictions=predictions)}
