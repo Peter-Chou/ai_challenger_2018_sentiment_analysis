@@ -11,7 +11,7 @@ def average_macro_f1(labels, predictions):
     update_op_list = []
     f1_list = []
     for sentiment in range(total_sentiments):
-        tp, tf_update_op = tf.metrics.true_positives(
+        tp, tp_update_op = tf.metrics.true_positives(
             predictions=predictions[:, sentiment],
             labels=labels[:, sentiment],
             name=f"tp_{sentiment}")
@@ -37,6 +37,6 @@ def average_macro_f1(labels, predictions):
                      true_fn=lambda: 0.,
                      false_fn=lambda: 2 * (precision * recall) / (precision + recall))
         f1_list.append(f1)
-        update_op_list.extend([tf_update_op, fp_update_op, fn_update_op])
+        update_op_list.extend([tp_update_op, fp_update_op, fn_update_op])
 
     return tf.reduce_mean(f1_list), tf.group(*update_op_list)
