@@ -144,7 +144,7 @@ def main(unused):
     # define eval spec
     eval_spec = tf.estimator.EvalSpec(
         eval_input_fn,
-        steps=100,
+        steps=500,
         throttle_secs=0,
         # exporters=[exporters],
         name="eval")

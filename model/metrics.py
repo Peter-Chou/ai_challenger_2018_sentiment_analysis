@@ -33,9 +33,9 @@ def average_macro_f1(labels, predictions):
         precision = tp / (tp + fp)
         recall = tp / (tp + fn)
 
-        f1 = tf.cond(tf.reduce_any([tf.equal(precision, 0.), tf.equal(recall, 0)]),
+        f1 = tf.cond(tf.reduce_any([tf.equal(precision, 0.), tf.equal(recall, 0.)]),
                      true_fn=lambda: 0.,
-                     false_fn=lambda: 2 * (precision * recall) / (precision + recall))
+                     false_fn=lambda: (2. * (precision * recall) / (precision + recall)))
         f1_list.append(f1)
         update_op_list.extend([tp_update_op, fp_update_op, fn_update_op])
 
