@@ -86,14 +86,11 @@ def multihead_attention(queries,
         if num_units is None:
             num_units = queries.get_shape().as_list[-1]
 
-        # Q = tf.layers.dense(queries, num_units, use_bias=False)  # (N, T_q, C)
-        # K = tf.layers.dense(keys, num_units, use_bias=False)  # (N, T_k, C)
-        # V = tf.layers.dense(keys, num_units, use_bias=False)  # (N, T_k, C)
-
         # Linear projections
         # ? remove activation?
         # 使得不同的multi-head attention 都回应不同的query，以及句子的不同子理解
-        Q = tf.layers.dense(queries, num_units,
+        Q = tf.layers.dense(queries,
+                            num_units,
                             kernel_initializer=kernel_initializer,
                             kernel_regularizer=kernel_regularizer,
                             activation=tf.nn.relu)  # (N, T_q, C)
