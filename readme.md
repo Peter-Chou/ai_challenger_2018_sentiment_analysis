@@ -57,6 +57,8 @@ Transformer是由谷歌团队在[Attention Is All You Need]( https://arxiv.org/p
 卷积层kernel的宽度为Transformer提取的Attention的维度大小，kernel的高度取10（即对临近的10个Attention进行卷积操作）。kernel的数量取64  
 最大池化的作用范围为整个feature map，即每个Kernel得到的feature map在经过最大池化后被提炼为一个值
 
+![textcnn pic](/pic/textcnn.png)
+
 ## 效果
 
 Average Macro F1 = 0.6, 比赛排名为111名（总共256名）
