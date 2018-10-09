@@ -53,5 +53,5 @@ random_seed: 1024
 
 # hook parameters
 print_n_step: 20
-save_n_step: 500
+save_n_step: 1000
 keep_checkpoint_max: 20

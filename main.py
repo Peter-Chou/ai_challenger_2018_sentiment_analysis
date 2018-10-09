@@ -49,7 +49,7 @@ def save_or_update_predict(predicts,
 
 
 def main(unused):
-    params = Params("params.yml")
+    params = Params("params.yaml")
     args = parser.parse_args()
     if args.model_dir is None:
         raise Exception("You must give a folder to save / retore the model")
