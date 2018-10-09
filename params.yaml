@@ -47,7 +47,8 @@ m_mul: 0.9 # m_mul ** i * learning_rate when ith restart start
 alpha: 0.0  # minimum lr during decay
 
 # training parameters
-train_steps: 92000
+train_steps: 45000
+# train_steps: 92000
 random_seed: 1024
 
 
