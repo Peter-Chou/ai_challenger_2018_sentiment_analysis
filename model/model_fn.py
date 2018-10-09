@@ -132,9 +132,20 @@ def model_fn(
         # predictions = tf.nn.softmax(logits)
         predictions = tf.cast(tf.equal(tf.reduce_max(
             logits, axis=-1, keepdims=True), logits), tf.float32)
+
+        avg_macro_f1, avg_macro_f1_update_op = average_macro_f1(labels=tf.cast(labels, tf.float32),
+                                                                predictions=predictions)
+
         eval_metric_ops = {
-            'avg_macro_f1': average_macro_f1(labels=tf.cast(labels, tf.float32),
-                                             predictions=predictions)}
+            'avg_macro_f1': (avg_macro_f1, avg_macro_f1_update_op)}
+
+        tf.summary.scalar("loss", loss)
+        tf.summary.scalar("f1", avg_macro_f1)
+
+        summary_hook = tf.train.SummarySaverHook(save_steps=params.print_n_step,
+                                                 output_dir="./summary",
+                                                 summary_op=tf.summary.merge_all())
+
     else:
         loss = None
         eval_metric_ops = None
@@ -179,7 +190,7 @@ def model_fn(
         predictions = None
         export_outputs = None
 
-    training_hooks = [custom_logger] if is_training else None
+    training_hooks = [custom_logger, summary_hook] if is_training else None
 
     return tf.estimator.EstimatorSpec(mode=mode,
                                       predictions=predictions,
