@@ -61,4 +61,4 @@ Transformer是由谷歌团队在[Attention Is All You Need]( https://arxiv.org/p
 
 ## 效果
 
-Average Macro F1 = 0.6, 比赛排名为111名（总共256名）
+Macro F1: 0.6 比赛排名位于50%
