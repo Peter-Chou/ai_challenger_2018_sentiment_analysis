@@ -35,7 +35,7 @@ https://github.com/chdd/weibo/blob/master/stopwords/%E4%B8%AD%E6%96%87%E5%81%9C%
 
 模型由参数共享的语句理解层和参数独立的情感辨别层：
 
-- 特征共享层：由1词向量层 + 1位置向量层(提供位置信息) + 3个Transformer自注意力模块组成
+- 特征共享层：由1词向量层 + 1位置向量层(提供位置信息) + 3个Transformer Encoder 自注意力模块组成
 - 情感辨别层：由1卷积层 + 1最大池化层 + 1全连接层组成
 
 ![attn_conv picture](/pic/attnconv_all_in_one.png)
@@ -47,13 +47,13 @@ https://github.com/chdd/weibo/blob/master/stopwords/%E4%B8%AD%E6%96%87%E5%81%9C%
 Transformer是由谷歌团队在[Attention Is All You Need]( https://arxiv.org/pdf/1706.03762.pdf)首次提出，这里使用的是Encoder中的自注意力Transformer  
 自注意力Transformer对输入进行线性变换得到每个位置的query和(key, value)键值对,  
 通过对query和key求点积来寻找与query最相关的key并对其结果使用softmax得到该键值对的权重。  
-这个query的回答就是：sum(value $\times$ 对应权重)  
+这个query的回答就是：sum(value $\times​$ 对应权重)  
 最后对这个query的回答进行维度缩放（使用position-wise feed forword，即一维卷积，stride=1, 激活函数为relu）  
 这样若有N个位置，得到N个query及其对应的回答
 
 ### CNN情感辨别模块
 
-这里借鉴的是Yoon Kim在[Convolutional Neural Networks for Sentence Classification](https://arxiv.org/pdf/1408.5882.pdf)提出的架构。其中：  
+这里借鉴的是Yoon Kim在[Convolutional Neural Networks for Sentence Classification](http://aclweb.org/anthology/S18-1019)提出的架构。其中：  
 卷积层kernel的宽度为Transformer提取的Attention的维度大小，kernel的高度取10（即对临近的10个Attention进行卷积操作）。kernel的数量取64  
 最大池化的作用范围为整个feature map，即每个Kernel得到的feature map在经过最大池化后被提炼为一个值
 
