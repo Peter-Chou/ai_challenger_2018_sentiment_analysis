@@ -180,3 +180,4 @@ chinese_vectors/*
 TODO
 *.ipynb
 test*
+ensemble/*.csv
