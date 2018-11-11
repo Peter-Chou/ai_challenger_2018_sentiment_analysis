@@ -38,7 +38,7 @@ https://github.com/chdd/weibo/blob/master/stopwords/%E4%B8%AD%E6%96%87%E5%81%9C%
 - 特征共享层：由1词向量层 + 1位置向量层(提供位置信息) + 3个Transformer Encoder 自注意力模块组成
 - 情感辨别层：由1卷积层 + 1最大池化层 + 1全连接层组成
 
-![attn_conv picture](/pic/attnconv_all_in_one.png)
+![attn_conv picture](/pic/attnconv.png)
 
 该模型的思路是模仿人处理该问题的行为：第一步理解语句（自注意力模块），第二步辨别情感（卷积+最大池化）
 
@@ -51,6 +51,8 @@ Transformer是由谷歌团队在[Attention Is All You Need]( https://arxiv.org/p
 最后对这个query的回答进行维度缩放（使用position-wise feed forword，即一维卷积，stride=1, 激活函数为relu）  
 这样若有N个位置，得到N个query及其对应的回答
 
+![transformer_encoder picture](/pic/transformer_enc.png)
+
 ### CNN情感辨别模块
 
 这里借鉴的是Yoon Kim在[Convolutional Neural Networks for Sentence Classification](http://aclweb.org/anthology/S18-1019)提出的架构。其中：  
@@ -61,4 +63,4 @@ Transformer是由谷歌团队在[Attention Is All You Need]( https://arxiv.org/p
 
 ## 效果
 
-Macro F1: 0.6 比赛排名位于50%
+Average F1: 0.6 比赛排名位于50%
