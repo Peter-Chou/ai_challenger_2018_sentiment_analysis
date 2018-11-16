@@ -16,6 +16,7 @@
 opencc -i data/train/sentiment_analysis_trainingset.csv -o data/train/train_sc.csv -c t2s.json
 opencc -i data/val/sentiment_analysis_validationset.csv -o data/val/val_sc.csv -c t2s.json
 opencc -i data/test/a/sentiment_analysis_testa.csv -o data/test/a/a_sc.csv -c t2s.json
+opencc -i data/test/b/sentiment_analysis_testa.csv -o data/test/b/b_sc.csv -c t2s.json
 ```
 
 ### 中文词向量
