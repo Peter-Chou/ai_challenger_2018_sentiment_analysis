@@ -29,6 +29,13 @@ https://github.com/chdd/weibo/blob/master/stopwords/%E4%B8%AD%E6%96%87%E5%81%9C%
 分词使用的是[jieba](https://github.com/fxsjy/jieba)包, 主要先按词组拆分，如果词组不在词库(已去除停用词）中出现，再将该词组按字拆分,  
 因为考虑到项目为辨析情绪非翻译，考虑弱化语言结构，所以这里对未在词库中出现的新词不进行保留。
 
+```sh
+python preprocess_data.py --data_dir data/train
+python preprocess_data.py --data_dir data/val
+python preprocess_data.py -t --data_dir data/test/a
+python preprocess_data.py -t --data_dir data/test/b
+```
+
 ## 模型
 
 ### 模型结构
@@ -60,6 +67,20 @@ Transformer是由谷歌团队在[Attention Is All You Need]( https://arxiv.org/p
 最大池化的作用范围为整个feature map，即每个Kernel得到的feature map在经过最大池化后被提炼为一个值
 
 ![textcnn pic](/pic/textcnn.png)
+
+## 训练 / 推断
+
+### 训练
+
+```sh
+python main.py --model_dir output
+```
+
+### 推断
+
+```sh
+python main.py -t --test_dir path/to/test/folder --model_dir output
+```
 
 ## 效果
 
