@@ -43,5 +43,6 @@ def average_macro_f1(labels, predictions):
       f1_list.append(f1)
       update_op_list.append(update_op)
       # update_op_list.extend([tp_update_op, fp_update_op, fn_update_op])
+  f1_list = tf.stack(f1_list)
 
   return tf.reduce_mean(f1_list), tf.group(*update_op_list)
