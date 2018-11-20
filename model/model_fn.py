@@ -17,7 +17,7 @@ def model_fn(
   is_training = (mode == tf.estimator.ModeKeys.TRAIN)
 
   x = features
-  unchanged_labels = labels
+  unchanged_labels = labels  # non-smoothing labels for f1 metrics
 
   if params.label_smooth and labels is not None:
     labels = tf.cast(labels, tf.float32)
@@ -199,5 +199,4 @@ def model_fn(
                                     loss=loss,
                                     train_op=train_op,
                                     eval_metric_ops=eval_metric_ops,
-                                    training_hooks=training_hooks
-                                    )
+                                    training_hooks=training_hooks)
