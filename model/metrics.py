@@ -6,30 +6,34 @@ EPSILON = 1e-6
 
 def average_macro_f1(labels, predictions):
   batch_size = predictions.get_shape().as_list()[0]
-  total_sentiments = (predictions.get_shape().as_list()[1]
-                      * predictions.get_shape().as_list()[2])
-  labels = tf.reshape(labels, [batch_size, total_sentiments])
-  predictions = tf.reshape(predictions, [batch_size, total_sentiments])
+  # total_sentiments = (predictions.get_shape().as_list()[1]
+  #                     * predictions.get_shape().as_list()[2])
+  categories = predictions.get_shape().as_list()[1]
+  sentiments = predictions.get_shape().as_list()[2]
+  # labels = tf.reshape(labels, [batch_size, total_sentiments])
+  # predictions = tf.reshape(predictions, [batch_size, total_sentiments])
 
   update_op_list = []
   f1_list = []
   with tf.variable_scope("macro_f1"):
-    for sentiment in range(total_sentiments):
-      precision, precision_update_op = tf.metrics.precision(
-          labels=labels[:, sentiment],
-          predictions=predictions[:, sentiment],
-          name=f"p_{sentiment}")
+    for category in range(categories):
+      for sentiment in range(sentiments):
+        precision, precision_update_op = tf.metrics.precision(
+            labels=labels[:, category, sentiment],
+            predictions=predictions[:, category, sentiment],
+            name=f"p_{category}_{sentiment}")
 
-      recall, recall_update_op = tf.metrics.recall(
-          labels=labels[:, sentiment],
-          predictions=predictions[:, sentiment],
-          name=f"r_{sentiment}")
+        recall, recall_update_op = tf.metrics.recall(
+            labels=labels[:, category, sentiment],
+            predictions=predictions[:, category, sentiment],
+            name=f"r_{category}_{sentiment}")
 
-      f1 = 2 * (precision * recall) / (precision + recall + EPSILON)
+        f1 = 2 * (precision * recall) / (precision + recall + EPSILON)
 
-      f1_list.append(f1)
-      update_op_list.extend([precision_update_op, recall_update_op])
+        f1_list.append(f1)
+        update_op_list.extend([precision_update_op, recall_update_op])
 
+    # for sentiment in range(total_sentiments):
     #   tp, tp_update_op = tf.metrics.true_positives(
     #       predictions=predictions[:, sentiment],
     #       labels=labels[:, sentiment],
