@@ -18,7 +18,7 @@ def model_fn(
 
   x = features
 
-  if params.label_smooth and labels is not None:
+  if is_training and params.label_smooth and labels is not None:
     labels = tf.cast(labels, tf.float32)
     labels = label_smoothing(labels, epsilon=params.epsilon)
 
