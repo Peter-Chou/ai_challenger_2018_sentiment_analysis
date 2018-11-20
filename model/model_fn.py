@@ -17,8 +17,9 @@ def model_fn(
   is_training = (mode == tf.estimator.ModeKeys.TRAIN)
 
   x = features
+  unchanged_labels = labels
 
-  if is_training and params.label_smooth and labels is not None:
+  if params.label_smooth and labels is not None:
     labels = tf.cast(labels, tf.float32)
     labels = label_smoothing(labels, epsilon=params.epsilon)
 
@@ -133,8 +134,9 @@ def model_fn(
     predictions = tf.cast(tf.equal(tf.reduce_max(
         logits, axis=-1, keepdims=True), logits), tf.float32)
 
-    avg_macro_f1, avg_macro_f1_update_op = average_macro_f1(labels=tf.cast(labels, tf.float32),
-                                                            predictions=predictions)
+    avg_macro_f1, avg_macro_f1_update_op = average_macro_f1(
+        labels=tf.cast(unchanged_labels, tf.float32),
+        predictions=predictions)
 
     eval_metric_ops = {
         'avg_macro_f1': (avg_macro_f1, avg_macro_f1_update_op)}
